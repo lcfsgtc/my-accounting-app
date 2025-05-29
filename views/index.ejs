@@ -17,8 +17,9 @@
         <a href="/add" class="btn btn-primary">添加交易记录</a>
         <a href="/statistics" class="btn btn-info">查看统计</a>
         <a href="/change-password" class="btn btn-warning">修改密码</a>
+        <a href="/export" class="btn btn-secondary">导出所有</a>
         <a href="/export/month" class="btn btn-secondary">按月导出</a>
-        <a href="/export/year" class="btn btn-secondary">按年导出</a>       
+        <a href="/export/year" class="btn btn-secondary">按年导出</a>              
         <% if (locals.session && locals.session.isAdmin) { %>
             <a href="/admin/users" class="btn btn-warning">用户管理</a>
         <% } %>

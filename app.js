@@ -402,48 +402,32 @@ app.get('/statistics', requireLogin,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-// 导出交易记录
-app.get('/export/:period?', requireLogin, async (req, res) => {
+// 导出所有交易记录
+app.get('/export', requireLogin, async (req, res) => {
     try {
-        const { period } = req.params; // Get period from URL params
         const userId = req.session.userId;
 
-        let startDate, endDate;
-
-        if (period === 'month') {
-            const now = new Date();
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        } else if (period === 'year') {
-            const now = new Date();
-            startDate = new Date(now.getFullYear(), 0, 1);
-            endDate = new Date(now.getFullYear() + 1, 0, 0);
-        }
-
-        let transactions;
-
-        if (startDate && endDate) {
-            transactions = await Transaction.find({
-                userId: userId,
-                date: {
-                    $gte: startDate,
-                    $lte: endDate
-                }
-            }).sort({ date: 'desc' });
-        } else {
-            transactions = await Transaction.find({ userId: userId }).sort({ date: 'desc' });
-        }
+        const transactions = await Transaction.find({ userId: userId }).sort({ date: 'desc' });
 
         if (!transactions || transactions.length === 0) {
-            return res.status(404).send('No transactions found for the specified period.');
+            return res.status(404).send('No transactions found.');
         }
-
-        const fields = ['description', 'amount', 'category', 'date'];
+        // 转换交易记录为 JSON 格式，并格式化日期
+        const formattedTransactions = transactions.map(transaction => {
+            return {
+                description: transaction.description,
+                amount: transaction.amount,
+                category: transaction.category,
+                subcategory: transaction.subcategory, // 添加 subcategory
+                date: formatDate(transaction.date) // 格式化日期
+            };
+        });
+        const fields = ['description', 'amount', 'category', 'subcategory','date'];
         const opts = { fields };
 
         try {
             const parser = new Parser(opts);
-            const csv = parser.parse(transactions);
+            const csv = parser.parse(formattedTransactions);
 
             res.header('Content-Type', 'text/csv');
             res.attachment('transactions.csv');
@@ -457,6 +441,119 @@ app.get('/export/:period?', requireLogin, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+// 按月导出交易记录
+app.get('/export/month', requireLogin, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        const transactions = await Transaction.find({
+            userId: userId,
+            date: {
+                $gte: startDate,
+                $lte: endDate
+            }
+        }).sort({ date: 'desc' });
+
+
+        if (!transactions || transactions.length === 0) {
+            return res.status(404).send('No transactions found for the specified period.');
+        }
+        // 转换交易记录为 JSON 格式，并格式化日期
+        const formattedTransactions = transactions.map(transaction => {
+            return {
+                description: transaction.description,
+                amount: transaction.amount,
+                category: transaction.category,
+                subcategory: transaction.subcategory, // 添加 subcategory
+                date: formatDate(transaction.date) // 格式化日期
+            };
+        });
+        const fields = ['description', 'amount', 'category', 'subcategory','date'];
+        const opts = { fields };
+
+        try {
+            const parser = new Parser(opts);
+            const csv = parser.parse(formattedTransactions);
+
+            res.header('Content-Type', 'text/csv');
+            res.attachment('transactions.csv');
+            return res.send(csv);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send('Error generating CSV.');
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// 按年导出交易记录
+app.get('/export/year', requireLogin, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), 0, 1);
+        const endDate = new Date(now.getFullYear() + 1, 0, 0);
+
+        const transactions = await Transaction.find({
+            userId: userId,
+            date: {
+                $gte: startDate,
+                $lte: endDate
+            }
+        }).sort({ date: 'desc' });
+
+
+        if (!transactions || transactions.length === 0) {
+            return res.status(404).send('No transactions found for the specified period.');
+        }
+        // 转换交易记录为 JSON 格式，并格式化日期
+        const formattedTransactions = transactions.map(transaction => {
+            return {
+                description: transaction.description,
+                amount: transaction.amount,
+                category: transaction.category,
+                subcategory: transaction.subcategory, // 添加 subcategory
+                date: formatDate(transaction.date) // 格式化日期
+            };
+        });
+        const fields = ['description', 'amount', 'category', 'subcategory','date'];
+        const opts = { fields };
+
+        try {
+            const parser = new Parser(opts);
+            const csv = parser.parse(formattedTransactions);
+
+            res.header('Content-Type', 'text/csv');
+            res.attachment('transactions.csv');
+            return res.send(csv);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send('Error generating CSV.');
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    //return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 // 用户管理页面 (管理员权限)
 app.get('/admin/users', requireAdmin, async (req, res) => {
   try {
