@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const { Parser } = require('json2csv');
 
 const app = express();
 const port = 3000;
@@ -35,6 +36,7 @@ const transactionSchema = new mongoose.Schema({
   description: { type: String, required: true },
   amount: { type: Number, required: true },
   category: { type: String, required: true },
+  subcategory: { type: String, required: true },
   date: { type: Date,required: true, default: Date.now },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // 添加 userId 字段
 });
@@ -87,9 +89,13 @@ const checkRegistrationLimit = async (req, res, next) => {
 };
 // 中间件：检查用户是否已登录
 const requireLogin = (req, res, next) => {
+    console.log("Checking login status...");
+    console.log("Session:", req.session); // 打印 Session 信息    
     if (!req.session.userId) {
+        console.log("User not logged in. Redirecting to /login");       
         return res.redirect('/login');
     }
+    console.log("User logged in. Proceeding...");
     next();
 };
 // 中间件: 检查用户是否是管理员
@@ -156,7 +162,7 @@ app.post('/login', async (req, res) => {
     if (!user) {
       return res.status(400).send('Invalid username or password.');
     }
-
+    console.log(username+"登录成功");
     // 验证密码
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
@@ -165,7 +171,7 @@ app.post('/login', async (req, res) => {
 
     // 将用户 ID 存储在 session 中
     req.session.userId = user._id;
-
+    req.session.isAdmin = user.isAdmin;
     res.redirect('/');
   } catch (err) {
     console.error(err);
@@ -183,17 +189,56 @@ app.get('/logout', (req, res) => {
   });
 });
 // 首页 - 显示所有交易记录
-app.get('/', async (req, res) => {
+app.get('/', requireLogin,async (req, res) => {
   try {
     //const transactions = await Transaction.find().sort({ date: 'desc' }); // 从数据库中获取所有交易记录
     const transactions = await Transaction.find({ userId: req.session.userId }).sort({ date: 'desc' }); // 只显示当前用户的交易记录
-    res.render('index', { transactions: transactions });  // 渲染 index.ejs 模板，并将交易记录传递给模板
+    res.render('index', { transactions: transactions , session: req.session});  // 渲染 index.ejs 模板，并将交易记录传递给模板
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
   }
 });
+// 修改密码页面
+app.get('/change-password', requireLogin, (req, res) => {
+  res.render('change-password');
+});
+// 修改密码
+app.post('/change-password', requireLogin, async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.session.userId;
 
+    // 查找用户
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send('User not found.');
+    }
+
+    // 验证旧密码
+    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!passwordMatch) {
+      return res.status(400).send('Invalid old password.');
+    }
+
+    // 检查新密码和确认密码是否一致
+    if (newPassword !== confirmPassword) {
+      return res.status(400).send('New password and confirm password do not match.');
+    }
+
+    // 对新密码进行哈希处理
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 更新密码
+    user.password = hashedPassword;
+    await user.save();
+
+    res.redirect('/');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
 // 添加交易记录页面
 app.get('/add', requireLogin,(req, res) => {
   res.render('add_transaction');
@@ -202,11 +247,12 @@ app.get('/add', requireLogin,(req, res) => {
 // 添加交易记录
 app.post('/add',  requireLogin,async (req, res) => {
   try {
-    const { description, amount, category, date } = req.body;// 获取 date
+    const { description, amount, category, subcategory, date } = req.body;// 获取 获取 category 和 subcategory date
     const newTransaction = new Transaction({
       description: description,
       amount: amount,
       category: category,
+      subcategory: subcategory,     
       date: date,
       userId: req.session.userId // 添加 userId     
     });
@@ -248,11 +294,12 @@ app.get('/edit/:id', requireLogin,async (req, res) => {
 app.post('/edit/:id', requireLogin,async (req, res) => {
     try {
         const id = req.params.id;
-        const { description, amount, category,date } = req.body;
+        const { description, amount, category,subcategory,date } = req.body;
         await Transaction.findByIdAndUpdate(id, {
             description: description,
             amount: amount,
             category: category,
+            subcategory: subcategory,
             date: date // 更新 date
         });
         res.redirect('/');
@@ -264,7 +311,7 @@ app.post('/edit/:id', requireLogin,async (req, res) => {
 
 // 账单分类统计
 app.get('/statistics', requireLogin,async (req, res) => {
-    const { period } = req.query; // 获取查询参数 period (month 或 year)
+    const { period , categoryType} = req.query; // 获取查询参数 period (month 或 year)
     let groupBy = {};
     let dateFormat = '';
 
@@ -279,6 +326,12 @@ app.get('/statistics', requireLogin,async (req, res) => {
             year: { $year: '$date' }
         };
         dateFormat = '%Y';
+    } else if (period === 'category') {
+        // 默认统计所有数据
+        groupBy = {
+            [categoryType || 'category']: `$${categoryType || 'category'}`  // 按大类或小类统计
+        };
+        dateFormat = null;        
     } else {
         // 默认统计所有数据
         groupBy = {
@@ -293,7 +346,7 @@ app.get('/statistics', requireLogin,async (req, res) => {
         if (dateFormat) {
              pipeline = [
                 {
-                    $match: { userId: req.session.userId } // Only statistics for current user
+                    $match: { userId:new mongoose.Types.ObjectId(String(req.session.userId)) } // Only statistics for current user
                 },
                 {
                     $group: {
@@ -327,7 +380,7 @@ app.get('/statistics', requireLogin,async (req, res) => {
             // Default grouping by category
             pipeline = [
                 {
-                    $match: { userId: req.session.userId } // Only statistics for current user
+                    $match: { userId:new mongoose.Types.ObjectId(String(req.session.userId)) } // Only statistics for current user
                 },
                 {
                     $group: {
@@ -340,9 +393,65 @@ app.get('/statistics', requireLogin,async (req, res) => {
                 }
             ];
         }
-
+        console.log("Pipeline:", JSON.stringify(pipeline, null, 2));  // 打印聚合管道
         const statistics = await Transaction.aggregate(pipeline);
+        console.log("Statistics:", statistics);  // 打印统计结果
         res.render('statistics', { statistics: statistics, period: period });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+// 导出交易记录
+app.get('/export/:period?', requireLogin, async (req, res) => {
+    try {
+        const { period } = req.params; // Get period from URL params
+        const userId = req.session.userId;
+
+        let startDate, endDate;
+
+        if (period === 'month') {
+            const now = new Date();
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        } else if (period === 'year') {
+            const now = new Date();
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear() + 1, 0, 0);
+        }
+
+        let transactions;
+
+        if (startDate && endDate) {
+            transactions = await Transaction.find({
+                userId: userId,
+                date: {
+                    $gte: startDate,
+                    $lte: endDate
+                }
+            }).sort({ date: 'desc' });
+        } else {
+            transactions = await Transaction.find({ userId: userId }).sort({ date: 'desc' });
+        }
+
+        if (!transactions || transactions.length === 0) {
+            return res.status(404).send('No transactions found for the specified period.');
+        }
+
+        const fields = ['description', 'amount', 'category', 'date'];
+        const opts = { fields };
+
+        try {
+            const parser = new Parser(opts);
+            const csv = parser.parse(transactions);
+
+            res.header('Content-Type', 'text/csv');
+            res.attachment('transactions.csv');
+            return res.send(csv);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send('Error generating CSV.');
+        }
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
