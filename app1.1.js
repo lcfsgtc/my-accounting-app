@@ -311,43 +311,92 @@ app.post('/edit/:id', requireLogin,async (req, res) => {
 
 // 账单分类统计
 app.get('/statistics', requireLogin,async (req, res) => {
+    const { period , categoryType} = req.query; // 获取查询参数 period (month 或 year)
+    let groupBy = {};
+    let dateFormat = '';
+
+    if (period === 'month') {
+        groupBy = {
+            year: { $year: '$date' },
+            month: { $month: '$date' }
+        };
+        dateFormat = '%Y-%m';
+    } else if (period === 'year') {
+        groupBy = {
+            year: { $year: '$date' }
+        };
+        dateFormat = '%Y';
+    } else if (period === 'category') {
+        // 默认统计所有数据
+        groupBy = {
+            [categoryType || 'category']: `$${categoryType || 'category'}`  // 按大类或小类统计
+        };
+        dateFormat = null;        
+    } else {
+        // 默认统计所有数据
+        groupBy = {
+            category: '$category'
+        };
+        dateFormat = null;
+    }
+
     try {
-        const { startDate, endDate, categoryType, minAmount, maxAmount } = req.query;
-        const userId = req.session.userId;
+        let pipeline = [];
 
-        let match = { userId: new mongoose.Types.ObjectId(String(userId)) };
-
-        // 添加时间段过滤
-        if (startDate && endDate) {
-            match.date = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-            };
-        }
-
-        // 添加金额范围过滤
-        if (minAmount) {
-            match.amount = { $gte: parseFloat(minAmount) };
-        }
-        if (maxAmount) {
-            match.amount = { ...match.amount, $lte: parseFloat(maxAmount) }; // Ensure existing conditions are preserved
-        }
-
-        let groupBy = {};
-        if (categoryType && (categoryType === 'category' || categoryType === 'subcategory')) {
-            groupBy = { _id: `$${categoryType}` };
+        if (dateFormat) {
+             pipeline = [
+                {
+                    $match: { userId:new mongoose.Types.ObjectId(String(req.session.userId)) } // Only statistics for current user
+                },
+                {
+                    $group: {
+                        _id: groupBy,
+                        totalAmount: { $sum: '$amount' }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        period: {
+                            $dateToString: {
+                                format: dateFormat,
+                                date: {
+                                    $dateFromParts: {
+                                        'year': '$_id.year',
+                                        'month': { $ifNull: ['$_id.month', 1] },
+                                        'day': 1
+                                    }
+                                }
+                            }
+                        },
+                        totalAmount: 1
+                    }
+                },
+                {
+                    $sort: { period: 1 }  // Sort by period in ascending order
+                }
+            ];
         } else {
-            groupBy = { _id: null };  //统计所有
+            // Default grouping by category
+            pipeline = [
+                {
+                    $match: { userId:new mongoose.Types.ObjectId(String(req.session.userId)) } // Only statistics for current user
+                },
+                {
+                    $group: {
+                        _id: '$category',
+                        totalAmount: { $sum: '$amount' }
+                    }
+                },
+                {
+                    $sort: { _id: 1 }  // Sort by category in ascending order
+                }
+            ];
         }
-
-        const pipeline = [
-            { $match: match },
-            { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } }
-        ];
-
+        console.log("Pipeline:", JSON.stringify(pipeline, null, 2));  // 打印聚合管道
         const statistics = await Transaction.aggregate(pipeline);
-
-        res.render('statistics', { statistics: statistics, startDate, endDate, categoryType, minAmount, maxAmount });
+        console.log("Statistics:", statistics);  // 打印统计结果
+        res.render('statistics', { statistics: statistics, period: period });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');

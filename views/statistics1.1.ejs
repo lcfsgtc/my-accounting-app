@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>账单分类统计</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <style>
+        body {
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>账单分类统计</h1>
+    <a href="/" class="btn btn-secondary">返回首页</a>
+    <div class="mt-2">
+        <a href="/statistics?period=month" class="btn btn-outline-primary">按月统计</a>
+        <a href="/statistics?period=year" class="btn btn-outline-primary">按年统计</a>
+        <!--a href="/statistics" class="btn btn-outline-primary">按类别统计</a-->  <!-- 默认按类别统计 -->
+        <form action="/statistics" method="GET" style="display: inline-block;">
+            <input type="hidden" name="period" value="category">
+            <select name="categoryType" class="form-control" style="width: auto; display: inline-block;">
+                <option value="category">按大类统计</option>
+                <option value="subcategory">按小类统计</option>
+            </select>
+            <!--button type="submit" class="btn btn-outline-primary">按类别统计</button-->
+        </form>
+    </div>
+    <hr>
+    <h2>统计结果 (<%= period ? '按' + (period === 'month' ? '月' : '年') + '统计' : '按类别统计' %>)</h2>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>期间/类别</th>
+            <th>总金额</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% statistics.forEach(item => { %>
+            <tr>
+                <td><%= item.period || item._id %></td>
+                <td><%= item.totalAmount %></td>
+            </tr>
+        <% }); %>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
