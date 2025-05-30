@@ -50,6 +50,20 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false }, // 添加 isAdmin 字段
   registrationDate: { type: Date, default: Date.now }
 });
+
+// 定义 Income Schema
+const incomeSchema = new mongoose.Schema({
+    description: { type: String, required: true },
+    amount: { type: Number, required: true },
+    category: { type: String, required: true },
+    subcategory: { type: String, required: true },
+    date: { type: Date, required: true, default: Date.now },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+});
+
+// 创建 Income Model
+const Income = mongoose.model('Income', incomeSchema);
+
 // 创建 User Model
 const User = mongoose.model('User', userSchema);
 
@@ -118,7 +132,7 @@ const requireAdmin = (req, res, next) => {
 };
 // 注册页面
 app.get('/register', checkRegistrationLimit, (req, res) => {
-  res.render('register');
+  res.render('login/register');
 });
 // 注册
 app.post('/register', checkRegistrationLimit, async (req, res) => {
@@ -150,7 +164,7 @@ app.post('/register', checkRegistrationLimit, async (req, res) => {
 });
 // 登录页面
 app.get('/login', (req, res) => {
-  res.render('login');
+  res.render('login/login');
 });
 // 登录
 app.post('/login', async (req, res) => {
@@ -193,7 +207,7 @@ app.get('/', requireLogin,async (req, res) => {
   try {
     //const transactions = await Transaction.find().sort({ date: 'desc' }); // 从数据库中获取所有交易记录
     const transactions = await Transaction.find({ userId: req.session.userId }).sort({ date: 'desc' }); // 只显示当前用户的交易记录
-    res.render('index', { transactions: transactions , session: req.session});  // 渲染 index.ejs 模板，并将交易记录传递给模板
+    res.render('expense/index', { transactions: transactions , session: req.session});  // 渲染 index.ejs 模板，并将交易记录传递给模板
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -201,7 +215,7 @@ app.get('/', requireLogin,async (req, res) => {
 });
 // 修改密码页面
 app.get('/change-password', requireLogin, (req, res) => {
-  res.render('change-password');
+  res.render('login/change-password');
 });
 // 修改密码
 app.post('/change-password', requireLogin, async (req, res) => {
@@ -241,7 +255,7 @@ app.post('/change-password', requireLogin, async (req, res) => {
 });
 // 添加交易记录页面
 app.get('/add', requireLogin,(req, res) => {
-  res.render('add_transaction');
+  res.render('expense/add_transaction');
 });
 
 // 添加交易记录
@@ -283,7 +297,7 @@ app.get('/edit/:id', requireLogin,async (req, res) => {
         const transaction = await Transaction.findById(id);
         // 将日期转换为 ISO 字符串格式
         transaction.dateISO = transaction.date.toISOString().slice(0, 10); // 截取到日期部分
-        res.render('edit_transaction', { transaction: transaction });        
+        res.render('expense/edit_transaction', { transaction: transaction });        
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -309,94 +323,163 @@ app.post('/edit/:id', requireLogin,async (req, res) => {
     }
 });
 
+// 收入列表页面
+app.get('/incomes', requireLogin, async (req, res) => {
+    try {
+        const incomes = await Income.find({ userId: req.session.userId }).sort({ date: 'desc' });
+        res.render('incomes/index', { incomes: incomes });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+// 收入添加页面
+app.get('/incomes/add', requireLogin, (req, res) => {
+    res.render('incomes/add');
+});
+// 添加收入
+app.post('/incomes/add', requireLogin, async (req, res) => {
+    try {
+        const { description, amount, category, subcategory, date } = req.body;
+        const newIncome = new Income({
+            description: description,
+            amount: amount,
+            category: category,
+            subcategory: subcategory,
+            date: date,
+            userId: req.session.userId
+        });
+        await newIncome.save();
+        res.redirect('/incomes');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+// 收入编辑页面
+app.get('/incomes/edit/:id', requireLogin, async (req, res) => {
+    try {
+        const income = await Income.findById(req.params.id);
+        res.render('incomes/edit', { income: income });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+// 更新收入
+app.post('/incomes/edit/:id', requireLogin, async (req, res) => {
+    try {
+        const { description, amount, category, subcategory, date } = req.body;
+        await Income.findByIdAndUpdate(req.params.id, {
+            description: description,
+            amount: amount,
+            category: category,
+            subcategory: subcategory,
+            date: date
+        });
+        res.redirect('/incomes');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+// 删除收入
+app.post('/incomes/delete/:id', requireLogin, async (req, res) => {
+    try {
+        await Income.findByIdAndDelete(req.params.id);
+        res.redirect('/incomes');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+// 收入统计路由
+app.get('/incomes/statistics', requireLogin, async (req, res) => {
+    try {
+        const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
+        const userId = req.session.userId;
+
+        let match = { userId: new mongoose.Types.ObjectId(userId) };
+
+        // 时间段过滤
+        if (startDate && endDate) {
+            match.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
+        // 金额范围过滤
+        if (minAmount) {
+            match.amount = { $gte: parseFloat(minAmount) };
+        }
+        if (maxAmount) {
+            match.amount = { ...match.amount, $lte: parseFloat(maxAmount) };
+        }
+
+        let groupBy = {};
+        if (categoryType && (categoryType === 'category' || categoryType === 'subcategory')) {
+            groupBy = { _id: `$${categoryType}` };
+        } else if (period === 'year') {
+            groupBy = { _id: { $year: '$date' } };
+        } else if (period === 'month') {
+            groupBy = { _id: { $year: '$date', $month: '$date' } };
+        } else {
+            groupBy = { _id: null }; //所有
+        }
+
+        const pipeline = [
+            { $match: match },
+            { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } }
+        ];
+
+        const statistics = await Income.aggregate(pipeline);
+
+        res.render('incomes/statistics', { statistics: statistics, startDate, endDate, categoryType, minAmount, maxAmount, period });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
 // 账单分类统计
 app.get('/statistics', requireLogin,async (req, res) => {
-    const { period , categoryType} = req.query; // 获取查询参数 period (month 或 year)
-    let groupBy = {};
-    let dateFormat = '';
-
-    if (period === 'month') {
-        groupBy = {
-            year: { $year: '$date' },
-            month: { $month: '$date' }
-        };
-        dateFormat = '%Y-%m';
-    } else if (period === 'year') {
-        groupBy = {
-            year: { $year: '$date' }
-        };
-        dateFormat = '%Y';
-    } else if (period === 'category') {
-        // 默认统计所有数据
-        groupBy = {
-            [categoryType || 'category']: `$${categoryType || 'category'}`  // 按大类或小类统计
-        };
-        dateFormat = null;        
-    } else {
-        // 默认统计所有数据
-        groupBy = {
-            category: '$category'
-        };
-        dateFormat = null;
-    }
-
     try {
-        let pipeline = [];
+        const { startDate, endDate, categoryType, minAmount, maxAmount } = req.query;
+        const userId = req.session.userId;
 
-        if (dateFormat) {
-             pipeline = [
-                {
-                    $match: { userId:new mongoose.Types.ObjectId(String(req.session.userId)) } // Only statistics for current user
-                },
-                {
-                    $group: {
-                        _id: groupBy,
-                        totalAmount: { $sum: '$amount' }
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        period: {
-                            $dateToString: {
-                                format: dateFormat,
-                                date: {
-                                    $dateFromParts: {
-                                        'year': '$_id.year',
-                                        'month': { $ifNull: ['$_id.month', 1] },
-                                        'day': 1
-                                    }
-                                }
-                            }
-                        },
-                        totalAmount: 1
-                    }
-                },
-                {
-                    $sort: { period: 1 }  // Sort by period in ascending order
-                }
-            ];
-        } else {
-            // Default grouping by category
-            pipeline = [
-                {
-                    $match: { userId:new mongoose.Types.ObjectId(String(req.session.userId)) } // Only statistics for current user
-                },
-                {
-                    $group: {
-                        _id: '$category',
-                        totalAmount: { $sum: '$amount' }
-                    }
-                },
-                {
-                    $sort: { _id: 1 }  // Sort by category in ascending order
-                }
-            ];
+        let match = { userId: new mongoose.Types.ObjectId(String(userId)) };
+
+        // 添加时间段过滤
+        if (startDate && endDate) {
+            match.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
         }
-        console.log("Pipeline:", JSON.stringify(pipeline, null, 2));  // 打印聚合管道
+
+        // 添加金额范围过滤
+        if (minAmount) {
+            match.amount = { $gte: parseFloat(minAmount) };
+        }
+        if (maxAmount) {
+            match.amount = { ...match.amount, $lte: parseFloat(maxAmount) }; // Ensure existing conditions are preserved
+        }
+
+        let groupBy = {};
+        if (categoryType && (categoryType === 'category' || categoryType === 'subcategory')) {
+            groupBy = { _id: `$${categoryType}` };
+        } else {
+            groupBy = { _id: null };  //统计所有
+        }
+
+        const pipeline = [
+            { $match: match },
+            { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } }
+        ];
+
         const statistics = await Transaction.aggregate(pipeline);
-        console.log("Statistics:", statistics);  // 打印统计结果
-        res.render('statistics', { statistics: statistics, period: period });
+
+        res.render('expense/statistics', { statistics: statistics, startDate, endDate, categoryType, minAmount, maxAmount });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');

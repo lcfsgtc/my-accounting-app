@@ -14,8 +14,9 @@
 <div class="container">
     <h1>记账应用</h1>
     <% if (locals.session && locals.session.userId) { %>
-        <a href="/add" class="btn btn-primary">添加交易记录</a>
-        <a href="/statistics" class="btn btn-info">查看统计</a>
+        <a href="/incomes" class="btn btn-primary">收入管理</a>
+        <a href="/add" class="btn btn-primary">添加支出记录</a>
+        <a href="/statistics" class="btn btn-info">查看支出统计</a>
         <a href="/change-password" class="btn btn-warning">修改密码</a>
         <a href="/export" class="btn btn-secondary">导出所有</a>
         <a href="/export/month" class="btn btn-secondary">按月导出</a>

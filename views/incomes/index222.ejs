@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>收入列表</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .nav-item {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>收入列表</h1>
+    <div class="row">
+      <%- include(path.join(basedir, 'menu', 'sidebar.ejs')) %>
+        <form action="/incomes" method="GET">
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="startDate">开始日期:</label>
+                    <input type="date" class="form-control" id="startDate" name="startDate">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="endDate">结束日期:</label>
+                    <input type="date" class="form-control" id="endDate" name="endDate">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="category">大类:</label>
+                    <input type="text" class="form-control" id="category" name="category">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="subcategory">小类:</label>
+                    <input type="text" class="form-control" id="subcategory" name="subcategory">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">筛选</button>
+            <a href="/incomes/export<%=queryString%>" class="btn btn-secondary">导出</a>
+        </form>     
+        <div class="col-md-9">
+            <a href="/incomes/add" class="btn btn-primary">添加收入</a>
+            <a href="/incomes/statistics" class="btn btn-info">收入统计</a>
+            <hr>
+            <h2>收入记录</h2>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>描述</th>
+                    <th>金额</th>
+                    <th>大类</th>
+                    <th>小类</th>
+                    <th>日期</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% if (incomes && incomes.length > 0) { %>
+                    <% incomes.forEach(income => { %>
+                        <tr>
+                            <td><%= income.description %></td>
+                            <td><%= income.amount %></td>
+                            <td><%= income.category %></td>
+                            <td><%= income.subcategory %></td>
+                            <td><%= new Date(income.date).toLocaleDateString() %></td>
+                            <td>
+                                <a href="/incomes/edit/<%= income._id %>" class="btn btn-sm btn-warning">编辑</a>
+                                <form action="/incomes/delete/<%= income._id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6">暂无收入记录。</td>
+                    </tr>
+                <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>
