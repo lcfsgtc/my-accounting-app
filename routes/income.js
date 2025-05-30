@@ -141,6 +141,10 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
     app.post('/incomes/add', requireLogin, async (req, res) => {
         try {
             const { description, amount, category, subcategory, date } = req.body;
+            console.log("Received date:", date);
+            //const parsedDate = new Date(date + 'Z'); // Append 'Z' for UTC
+            //const parsedDate = new Date(date)
+            //console.log("Parsed date:", parsedDate);           
             const newIncome = new Income({
                 description: description,
                 amount: amount,
@@ -183,6 +187,10 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
         try {
             const id = req.params.id;
             const { description, amount, category, subcategory, date } = req.body;
+            console.log("Received date:", date);
+            //const parsedDate = new Date(date + 'Z'); // Append 'Z' for UTC
+            //const parsedDate = new Date(date)
+            //console.log("Parsed date:", parsedDate);               
             await Income.findByIdAndUpdate(id, {
                 description: description,
                 amount: amount,
