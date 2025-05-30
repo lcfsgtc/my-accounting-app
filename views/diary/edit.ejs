@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>编辑日记</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">      
+    <style>
+        body {
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>编辑日记</h1>
+    <form action="/diary/edit/<%= diary._id %>" method="POST">
+        <div class="form-group">
+            <label for="date">日期:</label>
+            <input type="date" class="form-control" id="date" name="date" value="<%= new Date(diary.date).toISOString().slice(0, 10) %>" required>
+        </div>
+        <div class="form-group">
+            <label for="title">标题:</label>
+            <input type="text" class="form-control" id="title" name="title" value="<%= diary.title %>">
+        </div>
+        <div class="form-group">
+            <label for="weather">天气:</label>
+            <input type="text" class="form-control" id="weather" name="weather" value="<%= diary.weather %>">
+        </div>
+        <div class="form-group">
+            <label for="mood">心情:</label>
+            <select class="form-control" id="mood" name="mood">
+                <option value="" <%= !diary.mood ? 'selected' : '' %>>请选择</option>
+                <option value="happy" <%= diary.mood === "happy" ? 'selected' : '' %>>快乐</option>
+                <option value="sad" <%= diary.mood === "sad" ? 'selected' : '' %>>悲伤</option>
+                <option value="neutral" <%= diary.mood === "neutral" ? 'selected' : '' %>>平静</option>
+                <option value="excited" <%= diary.mood === "excited" ? 'selected' : '' %>>激动</option>
+                <option value="frustrated" <%= diary.mood === "frustrated" ? 'selected' : '' %>>沮丧</option>
+            </select>
+        </div>
+         <div class="form-group">
+            <label for="location">地点:</label>
+            <input type="text" class="form-control" id="location" name="location" value="<%=diary.location%>">
+        </div>
+        <div class="form-group">
+            <label for="people">人物:(使用 英文 逗号 , 分割)</label>
+            <input type="text" class="form-control" id="people" name="people" value="<%=diary.people%>">
+        </div>
+        <div class="form-group">
+            <label for="tags">标签:(使用 英文 逗号 , 分割)</label>
+            <input type="text" class="form-control" id="tags" name="tags" value="<%=diary.tags%>">
+        </div>
+        <div class="form-group">
+            <label for="planList">计划列表:(一行一项)</label>
+            <textarea class="form-control" id="planList" name="planList" rows="3"><%= diary.planList.join('\n') %></textarea>
+        </div>
+        <div class="form-group">
+            <label for="eventList">事件列表:(一行一项)</label>
+            <textarea class="form-control" id="eventList" name="eventList" rows="3"><%= diary.eventList.join('\n') %></textarea>
+        </div>
+         <div class="form-group">
+            <label for="feeling">心情随笔:</label>
+            <textarea class="form-control" id="feeling" name="feeling" rows="3"><%= diary.feeling %></textarea>
+        </div>
+        <div class="form-group">
+            <label for="summary">每日总结:</label>
+            <textarea class="form-control" id="summary" name="summary" rows="5" required><%= diary.summary %></textarea>
+        </div>
+         <div class="form-group">
+            <label for="imageUrls">图片链接:(一行一个)</label>
+            <textarea class="form-control" id="imageUrls" name="imageUrls" rows="3"><%= diary.imageUrls ? diary.imageUrls.join('\n') : '' %></textarea>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="isPublic" name="isPublic" <%= diary.isPublic ? 'checked' : '' %>>
+            <label class="form-check-label" for="isPublic">公开日记</label>
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/diary" class="btn btn-secondary">取消</a>
+    </form>
+</div>
+</body>
+</html>

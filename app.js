@@ -10,6 +10,7 @@ const bcrypt = require('bcrypt');
 const userRoute = require('./routes/user');
 const incomeRoute = require('./routes/income');
 const expenseRoute = require('./routes/expense');
+const diaryRoute = require('./routes/diary');
 
 const app = express();
 const port = 3000;
@@ -28,7 +29,7 @@ mongoose.connect(process.env.MONGO_URI, {
 const User = require('./models/user');
 const Expense = require('./models/expense');
 const Income = require('./models/income');
-
+const Diary= require('./models/diary');
 // 中间件
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
@@ -83,7 +84,7 @@ const querystring = require('querystring');
 userRoute(app, User, requireLogin, requireAdmin,bcrypt);//createAdminUser,
 incomeRoute(app, Income, requireLogin,mongoose, path, querystring, Parser,formatDate);
 expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,formatDate);
-
+diaryRoute(app, Diary, requireLogin,mongoose, path, querystring);
 // 启动服务器
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
