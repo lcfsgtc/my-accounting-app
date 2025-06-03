@@ -8,12 +8,17 @@
         body {
             padding-top: 20px;
         }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-bottom: 10px;
+        }        
     </style>
 </head>
 <body>
 <div class="container">
     <h1>编辑日记</h1>
-    <form action="/diary/edit/<%= diary._id %>" method="POST">
+    <form action="/diary/edit/<%= diary._id %>" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="date">日期:</label>
             <input type="date" class="form-control" id="date" name="date" value="<%= new Date(diary.date).toISOString().slice(0, 10) %>" required>
@@ -65,9 +70,31 @@
             <label for="summary">每日总结:</label>
             <textarea class="form-control" id="summary" name="summary" rows="5" required><%= diary.summary %></textarea>
         </div>
-         <div class="form-group">
+         <!--div class="form-group">
             <label for="imageUrls">图片链接:(一行一个)</label>
             <textarea class="form-control" id="imageUrls" name="imageUrls" rows="3"><%= diary.imageUrls ? diary.imageUrls.join('\n') : '' %></textarea>
+        </div-->
+        <!-- Existing Images -->
+        <div class="form-group">
+            <label>现有图片:</label>
+            <% if (diary.imageUrls && diary.imageUrls.length > 0) { %>
+                <% diary.imageUrls.forEach(function(imageUrl, index) { %>
+                    <div>
+                        <img src="<%= imageUrl %>" alt="Image" class="image-preview">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="deleteImage<%= index %>" name="deleteImages" value="<%= imageUrl %>">
+                            <label class="form-check-label" for="deleteImage<%= index %>">删除</label>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <p>没有图片</p>
+            <% } %>
+        </div>
+        <!-- New Image Upload -->
+        <div class="form-group">
+            <label for="newImages">上传新图片:</label>
+            <input type="file" class="form-control-file" id="newImages" name="newImages" multiple>
         </div>
         <div class="form-check">
             <input type="checkbox" class="form-check-input" id="isPublic" name="isPublic" <%= diary.isPublic ? 'checked' : '' %>>

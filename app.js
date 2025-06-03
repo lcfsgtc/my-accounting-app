@@ -6,6 +6,7 @@ const MongoStore = require('connect-mongo');
 const bodyParser = require('body-parser');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
 
 const userRoute = require('./routes/user');
 const incomeRoute = require('./routes/income');
@@ -46,7 +47,18 @@ app.use(session({
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
+// 配置 multer 中间件
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/uploads/'); // 设置上传文件的存储目录
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)); // 设置上传文件的名称
+    }
+});
 
+const upload = multer({ storage: storage });
 // 中间件：检查用户是否已登录
 const requireLogin = (req, res, next) => {
     console.log("Checking login status...");
@@ -84,7 +96,7 @@ const querystring = require('querystring');
 userRoute(app, User, requireLogin, requireAdmin,bcrypt);//createAdminUser,
 incomeRoute(app, Income, requireLogin,mongoose, path, querystring, Parser,formatDate);
 expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,formatDate);
-diaryRoute(app, Diary, requireLogin,mongoose, path, querystring);
+diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
 // 启动服务器
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
