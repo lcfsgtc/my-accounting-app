@@ -1,0 +1,37 @@
+<!-- views/assets/view.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>资产详情</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>资产详情</h1>
+        <dl>
+            <dt>名称:</dt>
+            <dd><%= asset.name %></dd>
+            <dt>类型:</dt>
+            <dd><%= asset.type %></dd>
+            <dt>数量:</dt>
+            <dd><%= asset.quantity %></dd>
+            <dt>成本:</dt>
+            <dd><%= asset.cost %></dd>
+            <dt>现值:</dt>
+            <dd><%= asset.currentValue %></dd>            
+            <dt>购买日期:</dt>
+            <dd><%= asset.purchaseDate ? asset.purchaseDate.toLocaleDateString() : '' %></dd>
+            <dt>状况:</dt>
+            <dd><%= asset.condition %></dd>
+            <dt>折旧方法:</dt>
+            <dd><%= asset.depreciationMethod %></dd>
+            <dt>折旧率:</dt>
+            <dd><%= asset.depreciationRate %></dd>            
+            <dt>备注:</dt>
+            <dd><%= asset.notes %></dd>
+        </dl>
+        <a href="/assets" class="btn btn-secondary">返回列表</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!-- views/assets/list.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>资产列表</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" /-->   
+    <link rel="stylesheet" href="/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!--%- include(path.join(basedir, 'menu', 'sidebar.ejs')) %> <!-- 包含 sidebar -->
+        <%- include('../menu/sidebar.ejs') %>
+        <h1>资产列表</h1>
+        <a href="/assets/add" class="btn btn-primary mb-3">
+            <i class="fas fa-plus"></i> 添加资产
+        </a>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>类型</th>
+                    <th>数量</th>
+                    <th>成本</th>
+                    <th>现值</th>                    
+                    <th>购买日期</th>
+                    <th>状况</th>                    
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% assets.forEach(asset => { %>
+                    <tr>
+                        <td><%= asset.name %></td>
+                        <td><%= asset.type %></td>
+                        <td><%= asset.quantity %></td>
+                        <td><%= asset.cost %></td>
+                        <td><%= asset.currentValue %></td>                        
+                        <td><%= asset.purchaseDate ? asset.purchaseDate.toLocaleDateString() : '' %></td>
+                        <td><%= asset.condition %></td>                        
+                        <td>
+                            <a href="/assets/view/<%= asset._id %>" class="btn btn-info btn-sm" title="查看">
+                                <i class="fas fa-eye"></i>                                
+                            </a>
+                            <a href="/assets/edit/<%= asset._id %>" class="btn btn-warning btn-sm" title="编辑">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="/assets/delete/<%= asset._id %>" class="btn btn-danger btn-sm" title="删除" onclick="return confirm('确定要删除吗？')">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <div class="mt-4">
+            <h2>资产类型统计</h2>
+            <ul class="list-group">
+                <% for (const type in assetTypeCounts) { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <%= type %>
+                        <span class="badge badge-primary badge-pill"><%= assetTypeCounts[type] %></span>
+                    </li>
+                <% } %>
+            </ul>
+            <p class="mt-2">总成本: <%= totalCost %></p>
+            <p class="mt-2">总现值: <%= totalCurrentValue %></p>
+        </div>
+        <!--a href="/menu" class="btn btn-secondary mt-3">返回菜单</a-->
+        <a href="/" class="btn btn-secondary">返回首页</a>
+    </div>
+    <!--script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script-->   
+    <link rel="stylesheet" href="/jquery-3.5.1.slim.min.js">
+    <link rel="stylesheet" href="/popper.min.js">
+    <link rel="stylesheet" href="/bootstrap.min.js">
+</body>
+</html>

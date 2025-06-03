@@ -11,7 +11,6 @@ const multer = require('multer');
 const userRoute = require('./routes/user');
 const incomeRoute = require('./routes/income');
 const expenseRoute = require('./routes/expense');
-const assetRoute = require('./routes/asset'); 
 const diaryRoute = require('./routes/diary');
 
 const app = express();
@@ -31,7 +30,6 @@ mongoose.connect(process.env.MONGO_URI, {
 const User = require('./models/user');
 const Expense = require('./models/expense');
 const Income = require('./models/income');
-const Asset = require('./models/asset'); 
 const Diary= require('./models/diary');
 // 中间件
 app.set('view engine', 'ejs');
@@ -98,7 +96,6 @@ const querystring = require('querystring');
 userRoute(app, User, requireLogin, requireAdmin,bcrypt);//createAdminUser,
 incomeRoute(app, Income, requireLogin,mongoose, path, querystring, Parser,formatDate);
 expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,formatDate);
-assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); // 新增
 diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
 // 启动服务器
 app.listen(port, () => {

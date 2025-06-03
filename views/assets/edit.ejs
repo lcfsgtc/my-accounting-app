@@ -1,0 +1,67 @@
+<!-- views/assets/edit.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>编辑资产</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>编辑资产</h1>
+        <form action="/assets/edit/<%= asset._id %>" method="POST">
+            <div class="form-group">
+                <label for="name">名称:</label>
+                <input type="text" class="form-control" id="name" name="name" value="<%= asset.name %>" required>
+            </div>
+            <div class="form-group">
+                <label for="type">类型:</label>
+                <input type="text" class="form-control" id="type" name="type" value="<%= asset.type %>" required>
+            </div>
+             <div class="form-group">
+                <label for="quantity">数量:</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" value="<%= asset.quantity %>" required>
+            </div>
+            <div class="form-group">
+                <label for="cost">成本:</label>
+                <input type="number" class="form-control" id="cost" name="cost" value="<%= asset.cost %>" required>
+            </div>
+             <div class="form-group">
+                <label for="currentValue">现值:</label>
+                <input type="number" class="form-control" id="currentValue" name="currentValue" value="<%= asset.currentValue %>" required>
+            </div>            
+            <div class="form-group">
+                <label for="purchaseDate">购买日期:</label>
+                <input type="date" class="form-control" id="purchaseDate" name="purchaseDate" value="<%= asset.purchaseDate ? asset.purchaseDate.toISOString().split('T')[0] : '' %>">
+            </div>
+             <div class="form-group">
+                <label for="condition">状况:</label>
+                <select class="form-control" id="condition" name="condition">
+                    <option value="全新" <%= asset.condition === '全新' ? 'selected' : '' %>>全新</option>
+                    <option value="良好" <%= asset.condition === '良好' ? 'selected' : '' %>>良好</option>
+                    <option value="一般" <%= asset.condition === '一般' ? 'selected' : '' %>>一般</option>
+                    <option value="较差" <%= asset.condition === '较差' ? 'selected' : '' %>>较差</option>
+                    <option value="报废" <%= asset.condition === '报废' ? 'selected' : '' %>>报废</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="depreciationMethod">折旧方法:</label>
+                <select class="form-control" id="depreciationMethod" name="depreciationMethod">
+                    <option value="直线折旧" <%= asset.depreciationMethod === '直线折旧' ? 'selected' : '' %>>直线折旧</option>
+                    <option value="余额递减" <%= asset.depreciationMethod === '余额递减' ? 'selected' : '' %>>余额递减</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="depreciationRate">折旧率:</label>
+                <input type="number" class="form-control" id="depreciationRate" name="depreciationRate" step="0.01" value="<%= asset.depreciationRate %>">
+            </div>                        
+            <div class="form-group">
+                <label for="notes">备注:</label>
+                <textarea class="form-control" id="notes" name="notes"><%= asset.notes %></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">保存</button>
+            <a href="/assets" class="btn btn-secondary">取消</a>
+        </form>
+    </div>
+</body>
+</html>
