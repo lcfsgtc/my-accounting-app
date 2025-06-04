@@ -104,7 +104,9 @@ diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
-
+app.get('/test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+});
 //放在最后
 function formatDate(date) {
     const year = date.getFullYear();
