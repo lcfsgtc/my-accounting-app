@@ -15,6 +15,5 @@
       "src": "/(.*)",
       "dest": "app.js"
     }
-  ],
-  "public": "public" 
+  ]
 }
