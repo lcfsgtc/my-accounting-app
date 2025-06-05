@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
+const fs = require('fs');
 
 const userRoute = require('./routes/user');
 const incomeRoute = require('./routes/income');
@@ -107,8 +108,17 @@ app.listen(port, () => {
 app.get('/test', (req, res) => {
     console.log("233232");
     //res.send('Test route is working!');
-    res.sendFile('/vercel/path0/public/bootstrap.min.css');
-  //res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+    //res.sendFile('/vercel/path0/public/bootstrap.min.css');
+  res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+});
+app.get('/list', (req, res) => {
+  fs.readdir(path.join(__dirname, 'public'), (err, files) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error listing files');
+    }
+    res.send(files);
+  });
 });
 //放在最后
 function formatDate(date) {
