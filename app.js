@@ -36,7 +36,14 @@ const Asset = require('./models/asset');
 const Diary= require('./models/diary');
 // 中间件
 app.set('view engine', 'ejs');
-app.use(express.static('public'));
+//app.use(express.static('public'));
+app.use(express.static('public', {
+    setHeaders: (res, pathName) => {
+        if (pathName.endsWith('.css') || pathName.endsWith('.js')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8'); // or text/javascript for js
+        }
+    }
+}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(function(req, res, next) {
@@ -120,22 +127,7 @@ app.get('/list', (req, res) => {
     res.send(files);
   });
 });
-// 处理静态资源请求
-app.get('/:filename', (req, res) => {
-  const filename = req.params.filename;
-  handleGetRequest(['public', 'css', filename], res, true); // 静态资源
-});
 
-app.get('/:filename', (req, res) => {
-  const filename = req.params.filename;
-  handleGetRequest(['public', 'js', filename], res, true); // 静态资源
-});
-
-// 处理 HTML 页面请求
-/*app.get('/', (req, res) => {
-  handleGetRequest(['views', 'login/index.html'], res); // HTML 文件
-});*/
-//放在最后
 function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
@@ -155,46 +147,6 @@ function formatDate(date) {
     timeZoneName: 'short',
   };
   return date.toLocaleDateString('zh-CN', options).replace(/\//g, '-');*/
-}
-/**
- * @function handleGetRequest
- * @description 处理get响应数据的函数
- * @param {string[]} filePath 当前文件的路径字符串
- * @param {http.ServerResponse} res 响应对象
- * @param {boolean} isStatic 是否为静态资源
- * @param {object} responseHeadConfig 响应头配置对象
- */
-function handleGetRequest(
-    filePath = [],
-    res,
-    isStatic = false,
-    responseHeadConfig = {}
-) {
-    fs.readFile(path.join(__dirname, filePath), (err, data) => {
-        if (err) {
-            console.error(err); // 记录错误信息
-            return res.status(500).send('Server Error'); // 返回 500 错误
-        }
-
-        // 如果是静态资源，设置正确的 Content-Type
-        if (isStatic) {
-            let contentType = 'text/plain';
-            if (filePath[filePath.length - 1].endsWith('.css')) {
-                contentType = 'text/css';
-            } else if (filePath[filePath.length - 1].endsWith('.js')) {
-                contentType = 'application/javascript';
-            } // 可以根据需要添加更多类型
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(data);
-            return;
-        }
-
-        res.writeHead(200, {
-            "Content-Type": "text/html;charset=utf-8", // 解决html文件乱码问题
-            ...responseHeadConfig
-        });
-        res.end(data);
-    });
 }
 // 测试路由
 app.get('/test', (req, res) => {
