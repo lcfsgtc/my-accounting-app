@@ -105,7 +105,9 @@ app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
 app.get('/test', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+    console.log("233232");
+     res.send('Test route is working!');
+  //res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
 });
 //放在最后
 function formatDate(date) {
