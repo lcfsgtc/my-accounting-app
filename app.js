@@ -120,12 +120,21 @@ app.get('/list', (req, res) => {
     res.send(files);
   });
 });
-app.get('/menu', (req, res) => {
-    console.log("menu");
-    //res.send('Test route is working!');
-    //res.sendFile('/vercel/path0/public/bootstrap.min.css');
-  res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+// 处理静态资源请求
+app.get('/:filename', (req, res) => {
+  const filename = req.params.filename;
+  handleGetRequest(['public', 'css', filename], res, true); // 静态资源
 });
+
+app.get('/:filename', (req, res) => {
+  const filename = req.params.filename;
+  handleGetRequest(['public', 'js', filename], res, true); // 静态资源
+});
+
+// 处理 HTML 页面请求
+/*app.get('/', (req, res) => {
+  handleGetRequest(['views', 'login/index.html'], res); // HTML 文件
+});*/
 //放在最后
 function formatDate(date) {
     const year = date.getFullYear();
@@ -147,3 +156,57 @@ function formatDate(date) {
   };
   return date.toLocaleDateString('zh-CN', options).replace(/\//g, '-');*/
 }
+/**
+ * @function handleGetRequest
+ * @description 处理get响应数据的函数
+ * @param {string[]} filePath 当前文件的路径字符串
+ * @param {http.ServerResponse} res 响应对象
+ * @param {boolean} isStatic 是否为静态资源
+ * @param {object} responseHeadConfig 响应头配置对象
+ */
+function handleGetRequest(
+    filePath = [],
+    res,
+    isStatic = false,
+    responseHeadConfig = {}
+) {
+    fs.readFile(path.join(__dirname, filePath), (err, data) => {
+        if (err) {
+            console.error(err); // 记录错误信息
+            return res.status(500).send('Server Error'); // 返回 500 错误
+        }
+
+        // 如果是静态资源，设置正确的 Content-Type
+        if (isStatic) {
+            let contentType = 'text/plain';
+            if (filePath[filePath.length - 1].endsWith('.css')) {
+                contentType = 'text/css';
+            } else if (filePath[filePath.length - 1].endsWith('.js')) {
+                contentType = 'application/javascript';
+            } // 可以根据需要添加更多类型
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(data);
+            return;
+        }
+
+        res.writeHead(200, {
+            "Content-Type": "text/html;charset=utf-8", // 解决html文件乱码问题
+            ...responseHeadConfig
+        });
+        res.end(data);
+    });
+}
+// 测试路由
+app.get('/test', (req, res) => {
+    handleGetRequest(['public', 'bootstrap.min.css'], res, true);
+});
+
+app.get('/list', (req, res) => {
+    fs.readdir(path.join(__dirname, 'public'), (err, files) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send('Server Error');
+        }
+        res.send(files);
+    });
+});
