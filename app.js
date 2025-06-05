@@ -120,6 +120,12 @@ app.get('/list', (req, res) => {
     res.send(files);
   });
 });
+app.get('/menu', (req, res) => {
+    console.log("menu");
+    //res.send('Test route is working!');
+    //res.sendFile('/vercel/path0/public/bootstrap.min.css');
+  res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+});
 //放在最后
 function formatDate(date) {
     const year = date.getFullYear();
