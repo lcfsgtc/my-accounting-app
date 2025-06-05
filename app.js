@@ -106,7 +106,8 @@ app.listen(port, () => {
 });
 app.get('/test', (req, res) => {
     console.log("233232");
-     res.send('Test route is working!');
+    //res.send('Test route is working!');
+    res.sendFile('/vercel/path0/public/bootstrap.min.css');
   //res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
 });
 //放在最后
