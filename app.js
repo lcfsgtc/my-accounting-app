@@ -37,13 +37,13 @@ const Diary= require('./models/diary');
 // 中间件
 app.set('view engine', 'ejs');
 //app.use(express.static('public'));
-app.use(express.static('public', {
+/*app.use(express.static('public', {
     setHeaders: (res, pathName) => {
         if (pathName.endsWith('.css') || pathName.endsWith('.js')) {
             res.setHeader('Content-Type', 'text/css; charset=utf-8'); // or text/javascript for js
         }
     }
-}));
+}));*/
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(function(req, res, next) {
@@ -106,17 +106,46 @@ const querystring = require('querystring');
 userRoute(app, User, requireLogin, requireAdmin,bcrypt);//createAdminUser,
 incomeRoute(app, Income, requireLogin,mongoose, path, querystring, Parser,formatDate);
 expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,formatDate);
-assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); // 新增
+assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); 
 diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
 // 启动服务器
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
+// 自定义静态资源处理函数
+function handleGetRequest(filePath, res, isStatic = true) {
+    const fullPath = path.join(__dirname, ...filePath);
+
+    fs.readFile(fullPath, (err, data) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send('Server Error');
+            return;
+        }
+
+        if (isStatic) {
+            // 如果是静态资源，不进行乱码处理，直接返回
+            res.end(data);
+        } else {
+            // 否则，进行乱码处理
+            res.writeHead(200, {
+                'Content-Type': 'text/html;charset=utf-8',  // or 'text/javascript;charset=utf-8' for js files
+            });
+            res.end(data);
+        }
+    });
+}
+//  处理其他静态资源的路由 (重要!)
+app.use('/public', (req, res) => {  //拦截所有public文件夹下的请求
+    const filePath = req.url.split('?')[0]; // 获取请求路径，排除查询参数
+    handleGetRequest(['public', filePath], res, true); //  确保所有静态资源都经过此函数
+});
 app.get('/test', (req, res) => {
     console.log("233232");
     //res.send('Test route is working!');
     //res.sendFile('/vercel/path0/public/bootstrap.min.css');
-  res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+  //res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
+  handleGetRequest(['public', 'bootstrap.min.css'], res, true); // 修改这里
 });
 app.get('/list', (req, res) => {
   fs.readdir(path.join(__dirname, 'public'), (err, files) => {
@@ -127,7 +156,6 @@ app.get('/list', (req, res) => {
     res.send(files);
   });
 });
-
 function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
