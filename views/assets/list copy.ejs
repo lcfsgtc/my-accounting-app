@@ -1,13 +1,10 @@
-<!-- views/assets/list.ejs -->
 <!DOCTYPE html>
-<html  lang="zh-CN">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>资产列表</title>
-    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
     <link rel="stylesheet" href="/bootstrap.min.css">
-    <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" /-->   
     <link rel="stylesheet" href="/all.min.css">
     <style>
         body {
@@ -20,9 +17,14 @@
             padding-bottom: 20px; /* 底部内边距 */
             min-height: 100vh; /* 确保内容撑开整个视口高度 */
         }
+        .sidebar {
+            width: 250px; /* 设置侧边栏固定宽度 */
+            flex-shrink: 0; /* 防止侧边栏收缩 */
+            padding-right: 30px; /* 侧边栏和主内容之间留出一些空间 */
+        }
         .main-content-area {
             flex-grow: 1; /* 主内容区域占据剩余空间 */
-            padding-left: 30px; /* 给主内容和侧边栏之间留出一些空间 */
+            /* padding-left: 30px; */ /* 已通过 sidebar 的 padding-right 处理间距 */
         }
         .form-row .form-group {
             margin-bottom: 1rem; /* 增加表单组之间的垂直间距 */
@@ -37,20 +39,19 @@
             margin-right: 10px; /* 或者使用 Bootstrap 的 mr-2/mr-3 */
         }
         .action-buttons {
-             margin-top: 20px; /* 添加收入/统计按钮上方间距 */
-             margin-bottom: 20px; /* 添加收入/统计按钮下方间距 */
+            margin-top: 20px; /* 添加收入/统计按钮上方间距 */
+            margin-bottom: 20px; /* 添加收入/统计按钮下方间距 */
         }
         /* 确保 list-group-item 样式正确应用 */
         .list-group-item {
             border-radius: .25rem; /* 圆角 */
             border: 1px solid rgba(0,0,0,.125); /* 边框 */
         }
-    </style>    
+    </style>
 </head>
 <body>
-    <div class="container" app-container>
-        <!--%- include(path.join(basedir, 'menu', 'sidebar.ejs')) %> <!-- 包含 sidebar -->
-        <%- include('../menu/sidebar.ejs') %>
+    <div class="container app-container"> <div class="sidebar"> <%- include('../menu/sidebar.ejs') %>
+        </div>
         <div class="main-content-area">
             <h1>资产列表</h1>
             <form action="/assets" method="GET">
@@ -61,7 +62,7 @@
                     </div>
                     <div class="form-group col-md-3">
                         <label for="endDate">结束日期:</label>
-                        <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof endDate !== 'undefined' ? endDate : ''  %>">
+                        <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof endDate !== 'undefined' ? endDate : '' %>">
                     </div>
                     <div class="form-group col-md-3">
                         <label for="type">类型:</label>
@@ -70,15 +71,15 @@
                 </div>
                 <div class="filter-buttons">
                     <button type="submit" class="btn btn-primary">筛选</button>
-                    <a href="/assets/export<%=queryString%>" class="btn btn-secondary">导出</a>                
-                </div>      
+                    <a href="/assets/export<%=queryString%>" class="btn btn-secondary">导出</a>
+                </div>
             </form>
             <div class="action-buttons">
                 <a href="/assets/add" class="btn btn-success mr-2">添加资产</a>
-            </div>  
+            </div>
             <hr>
-            <h2>资产记录</h2> 
-            <div class="table-responsive">                        
+            <h2>资产记录</h2>
+            <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
@@ -86,9 +87,9 @@
                             <th>类型</th>
                             <th>数量</th>
                             <th>成本</th>
-                            <th>现值</th>                    
+                            <th>现值</th>
                             <th>购买日期</th>
-                            <th>状况</th>                    
+                            <th>状况</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -100,19 +101,14 @@
                                 <td><%= asset.type %></td>
                                 <td><%= asset.quantity %></td>
                                 <td><%= asset.cost %></td>
-                                <td><%= asset.currentValue %></td>                        
+                                <td><%= asset.currentValue %></td>
                                 <td><%= asset.purchaseDate ? asset.purchaseDate.toLocaleDateString() : '' %></td>
-                                <td><%= asset.condition %></td>                        
+                                <td><%= asset.condition %></td>
                                 <td>
-                                    <a href="/assets/view/<%= asset._id %>" class="btn btn-info btn-sm" title="查看">
-                                        <i class="fas fa-eye"></i>                                
-                                    </a>
-                                    <a href="/assets/edit/<%= asset._id %>" class="btn btn-warning btn-sm" title="编辑">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="/assets/delete/<%= asset._id %>" class="btn btn-danger btn-sm" title="删除" onclick="return confirm('确定要删除吗？')">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
+                                    <a href="/assets/edit/<%= asset._id %>" class="btn btn-sm btn-warning">编辑</a>
+                                    <form action="/assets/delete/<%= asset._id %>" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</button>
+                                    </form>                                   
                                 </td>
                             </tr>
                         <% }) %>
@@ -120,10 +116,10 @@
                         <tr>
                             <td colspan="6">暂无资产记录。</td>
                         </tr>
-                    <% } %>                 
+                        <% } %>
                     </tbody>
                 </table>
-            </div>    
+            </div>
             <div class="mt-4">
                 <h2>资产类型统计</h2>
                 <ul class="list-group">
@@ -137,15 +133,11 @@
                 <p class="mt-2">总成本: <%= totalCost %></p>
                 <p class="mt-2">总现值: <%= totalCurrentValue %></p>
             </div>
-            <!--a href="/menu" class="btn btn-secondary mt-3">返回菜单</a-->
             <a href="/" class="btn btn-secondary">返回首页</a>
         </div>
     </div>
-    <!--script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script-->   
-    <link rel="stylesheet" href="/jquery-3.5.1.slim.min.js">
-    <link rel="stylesheet" href="/popper.min.js">
-    <link rel="stylesheet" href="/bootstrap.min.js">
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
 </body>
 </html>

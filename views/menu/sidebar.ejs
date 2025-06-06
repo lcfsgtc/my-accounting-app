@@ -1,9 +1,39 @@
-<div class="col-md-3">
+<div class="col-12 col-sm-4 col-md-2 sidebar-menu">
     <h2 class="mb-4">管理</h2>
     <div class="list-group">
         <a href="/incomes" class="list-group-item list-group-item-action bg-primary text-white mb-2">收入管理</a>
         <a href="/expenses" class="list-group-item list-group-item-action bg-success text-white mb-2">支出管理</a>
-         <a href="/assets" class="list-group-item list-group-item-action bg-secondary text-white mb-2">资产盘点</a>       
+        <a href="/assets" class="list-group-item list-group-item-action bg-secondary text-white mb-2">资产盘点</a>
         <a href="/diary" class="list-group-item list-group-item-action bg-info text-white mb-2">日志管理</a>
     </div>
 </div>
+
+<style>
+    /* Add this style block directly in sidebar.ejs or in a global CSS file */
+    /* Adjust sidebar heading size for smaller screens */
+    @media (max-width: 767.98px) { /* Small devices (landscape phones, 576px and up) */
+        .sidebar-menu {
+            text-align: center; /* Center menu items on small screens if desired */
+            margin-bottom: 20px; /* Add some space below the menu on small screens */
+        }
+        .sidebar-menu .list-group {
+            display: flex; /* Make menu items horizontal */
+            flex-wrap: wrap; /* Allow wrapping */
+            justify-content: center; /* Center wrapped items */
+            gap: 10px; /* Space between menu items */
+        }
+        .sidebar-menu .list-group-item {
+            flex-grow: 1; /* Allow items to grow */
+            max-width: calc(50% - 10px); /* Two items per row, with gap */
+        }
+        .sidebar-menu h2 {
+            font-size: 1.5rem; /* Smaller heading */
+        }
+    }
+
+    @media (min-width: 768px) and (max-width: 991.98px) { /* Medium devices (tablets, 768px and up) */
+        .sidebar-menu {
+            padding-right: 15px; /* Adjust padding for tablet */
+        }
+    }
+</style>

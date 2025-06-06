@@ -4,67 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>收入列表</title>
-    <!--link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9SJTM" crossorigin="anonymous"-->
     <link rel="stylesheet" href="/bootstrap.min.css">
     <style>
         body {
             background-color: #f8f9fa; /* 轻微的背景色，使界面更柔和 */
         }
-        /* 自定义样式以适应侧边栏和主内容布局 */
+        
+        /* Main application container using flexbox for sidebar and content */
         .app-container {
-            display: flex; /* 使用 Flexbox 进行主布局 */
-            padding-top: 20px; /* 顶部内边距 */
-            padding-bottom: 20px; /* 底部内边距 */
-            min-height: 100vh; /* 确保内容撑开整个视口高度 */
+            display: flex;
+            flex-wrap: wrap; /* Allows columns (sidebar and main-content) to wrap on smaller screens */
+            padding-top: 20px;
+            padding-bottom: 20px;
+            min-height: 100vh;
         }
+
+        /* Main content area styling */
         .main-content-area {
-            flex-grow: 1; /* 主内容区域占据剩余空间 */
-            padding-left: 30px; /* 给主内容和侧边栏之间留出一些空间 */
+            flex-grow: 1; /* Takes up remaining space */
+            /* Default padding for all screen sizes */
+            padding-left: 15px; 
+            padding-right: 15px;
         }
+        
+        /* Adjust padding for medium and larger screens */
+        @media (min-width: 768px) { /* Medium devices (tablets, 768px and up) */
+            .main-content-area {
+                padding-left: 30px; /* More space for tablets and desktops when sidebar is visible */
+            }
+        }
+
+        /* Form row and group spacing */
         .form-row .form-group {
-            margin-bottom: 1rem; /* 增加表单组之间的垂直间距 */
+            margin-bottom: 1rem;
         }
-        .filter-buttons {
-            margin-bottom: 20px; /* 筛选按钮下方间距 */
-            display: flex; /* 让筛选和导出按钮并排 */
-            gap: 10px; /* 按钮之间间距，Bootstrap 4 没有原生 gap，这里是自定义样式 */
-        }
-        /* 如果希望 Bootstrap 4 的按钮有间距，可以使用 mr-2 等类 */
-        .filter-buttons .btn {
-            margin-right: 10px; /* 或者使用 Bootstrap 的 mr-2/mr-3 */
+        
+        /* Filter and action button groups */
+        .filter-buttons,
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap; /* Allows buttons to wrap to next line on small screens */
+            gap: 10px; /* Spacing between buttons (Bootstrap 4 doesn't natively support 'gap' but most browsers do) */
+            margin-bottom: 20px; /* Space below button groups */
         }
         .action-buttons {
-             margin-top: 20px; /* 添加收入/统计按钮上方间距 */
-             margin-bottom: 20px; /* 添加收入/统计按钮下方间距 */
+            margin-top: 20px; /* Space above action buttons */
         }
-        /* 确保 list-group-item 样式正确应用 */
+        /* Ensure specific button spacing if 'gap' isn't fully supported or preferred */
+        .filter-buttons .btn:not(:last-child),
+        .action-buttons .btn:not(:last-child) {
+            margin-right: 10px; /* Fallback/additional spacing for buttons */
+        }
+
+
+        /* Ensure list-group-item styles apply correctly */
         .list-group-item {
-            border-radius: .25rem; /* 圆角 */
-            border: 1px solid rgba(0,0,0,.125); /* 边框 */
+            border-radius: .25rem;
+            border: 1px solid rgba(0,0,0,.125);
+        }
+
+        /* Form row behavior for smaller screens */
+        @media (max-width: 767.98px) { /* Small devices (phones) */
+            .form-row {
+                flex-direction: column; /* Stack form groups vertically */
+            }
+            .form-row .form-group {
+                width: 100%; /* Full width for form groups */
+            }
+        }
+
+        /* Responsive table styling for smaller screens */
+        @media (max-width: 767.98px) { /* Small devices (phones) */
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto; /* Enables horizontal scrolling for very wide tables */
+                -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+                -ms-overflow-style: -ms-autohiding-scrollbar; /* For IE/Edge */
+            }
+            .table-responsive table {
+                width: 100%; /* Ensure the table itself takes full width of its container */
+                border-collapse: collapse; /* For cleaner borders on stacked tables */
+            }
+            /* Force table into 'stacking' mode on small screens */
+            .table-responsive thead,
+            .table-responsive tbody,
+            .table-responsive th,
+            .table-responsive td,
+            .table-responsive tr {
+                display: block;
+            }
+            /* Hide the original table headers */
+            .table-responsive thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            /* Add border between stacked rows */
+            .table-responsive tr {
+                border: 1px solid #ccc;
+                margin-bottom: 15px; /* Space between stacked rows */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Slight shadow for separation */
+                border-radius: .25rem; /* Match card-like appearance */
+            }
+            /* Style individual cells */
+            .table-responsive td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%; /* Space for the pseudo-element label */
+                text-align: right; /* Align actual data to the right */
+                font-size: 0.9em; /* Slightly smaller text for data */
+            }
+            /* Remove bottom border for the last cell in a row */
+            .table-responsive tr:last-child td {
+                border-bottom: none;
+            }
+            /* Add data labels using pseudo-elements */
+            .table-responsive td:before {
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                width: 45%; /* Width for the label */
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left; /* Align labels to the left */
+                font-weight: bold;
+                color: #555; /* Slightly darker label color */
+            }
+            /* Specific labels for each column based on your table structure */
+            .table-responsive td:nth-of-type(1):before { content: "描述:"; }
+            .table-responsive td:nth-of-type(2):before { content: "金额:"; }
+            .table-responsive td:nth-of-type(3):before { content: "大类:"; }
+            .table-responsive td:nth-of-type(4):before { content: "小类:"; }
+            .table-responsive td:nth-of-type(5):before { content: "日期:"; }
+            .table-responsive td:nth-of-type(6):before { content: "操作:"; }
+
+            /* Action buttons inside table on mobile */
+            .table-responsive td:last-of-type {
+                text-align: center; /* Center action buttons */
+                padding-left: 15px; /* Adjust padding for buttons */
+                padding-right: 15px;
+            }
+            .table-responsive td:last-of-type .btn {
+                margin: 5px; /* Space between action buttons */
+            }
         }
     </style>
 </head>
 <body>
 <div class="container-fluid app-container">
     <%- include(path.join(basedir, 'menu', 'sidebar.ejs')) %>
-    <div class="main-content-area">
+
+    <div class="col-12 col-sm-8 col-md-10 main-content-area">
         <h1>收入列表</h1>
 
         <form action="/incomes" method="GET">
             <div class="form-row">
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-3 col-sm-6">
                     <label for="startDate">开始日期:</label>
                     <input type="date" class="form-control" id="startDate" name="startDate" value="<%= typeof startDate !== 'undefined' ? startDate : '' %>">
                 </div>
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-3 col-sm-6">
                     <label for="endDate">结束日期:</label>
                     <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof endDate !== 'undefined' ? endDate : '' %>">
                 </div>
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-3 col-sm-6">
                     <label for="category">大类:</label>
                     <input type="text" class="form-control" id="category" name="category" value="<%= typeof category !== 'undefined' ? category : '' %>">
                 </div>
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-3 col-sm-6">
                     <label for="subcategory">小类:</label>
                     <input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= typeof subcategory !== 'undefined' ? subcategory : '' %>">
                 </div>
@@ -76,7 +184,7 @@
         </form>
 
         <div class="action-buttons">
-            <a href="/incomes/add" class="btn btn-success mr-2">添加收入</a>
+            <a href="/incomes/add" class="btn btn-success">添加收入</a>
             <a href="/incomes/statistics" class="btn btn-info">收入统计</a>
         </div>
 
@@ -122,11 +230,8 @@
     </div>
 </div>
 
-<!--script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57B+UjD/E1p55b2E66J9R/5xM8W+5Q" crossorigin="anonymous"></script-->
-<link rel="stylesheet" href="/jquery-3.5.1.slim.min.js">
-<link rel="stylesheet" href="/popper.min.js">
-<link rel="stylesheet" href="/bootstrap.min.js">
+<script src="/jquery-3.5.1.slim.min.js"></script>
+<script src="/popper.min.js"></script>
+<script src="/bootstrap.min.js"></script>
 </body>
 </html>
