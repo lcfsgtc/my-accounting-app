@@ -2,8 +2,10 @@
   "name": "my-accounting-app",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
+    "start": "node app.js", 
+    "build": "echo 'No dedicated build step for this Node.js API' && exit 0", 
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

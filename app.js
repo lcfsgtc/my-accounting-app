@@ -17,7 +17,8 @@ const diaryRoute = require('./routes/diary');
 
 const app = express();
 const port = 3000;
-
+const PROJECT_ROOT = process.cwd();
+console.log('PROJECT_ROOT:', PROJECT_ROOT);  
 global.__basedir = __dirname;
 
 // 数据库连接
@@ -36,18 +37,16 @@ const Asset = require('./models/asset');
 const Diary= require('./models/diary');
 // 中间件
 app.set('view engine', 'ejs');
+//app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(PROJECT_ROOT, 'views'));
 //app.use(express.static('public'));
-/*app.use(express.static('public', {
-    setHeaders: (res, pathName) => {
-        if (pathName.endsWith('.css') || pathName.endsWith('.js')) {
-            res.setHeader('Content-Type', 'text/css; charset=utf-8'); // or text/javascript for js
-        }
-    }
-}));*/
+app.use(express.static(path.join(PROJECT_ROOT, 'public')));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(function(req, res, next) {
-    res.locals.basedir = path.join(__dirname, 'views');
+    //res.locals.basedir = path.join(__dirname, 'views');
+    res.locals.basedir = path.join(PROJECT_ROOT, 'views');
     next();
 });
 app.use(session({
@@ -60,7 +59,8 @@ app.use(session({
 // 配置 multer 中间件
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/'); // 设置上传文件的存储目录
+        //cb(null, 'public/uploads/'); // 设置上传文件的存储目录
+        cb(null, path.join(PROJECT_ROOT, 'public', 'uploads'));
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
@@ -108,78 +108,19 @@ incomeRoute(app, Income, requireLogin,mongoose, path, querystring, Parser,format
 expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,formatDate);
 assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); 
 diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
+
+/*const actualPort = process.env.PORT || port;
 // 启动服务器
-app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-});
-// 自定义静态资源处理函数
-function handleGetRequest(filePath, res, isStatic = true) {
-    const fullPath = path.join(__dirname, filePath);
-
-    fs.readFile(fullPath, (err, data) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send('Server Error');
-            return;
-        }
-
-        if (isStatic) {
-            // 如果是静态资源，不进行乱码处理，直接返回
-            console.log("静态资源文件");
-            res.end(data);
-        } else {
-            // 否则，进行乱码处理
-            console.log("非静态资源文件");
-            res.writeHead(200, {                
-                'Content-Type': 'text/javascript;charset=utf-8'//'text/html;charset=utf-8'//,  // or 'text/javascript;charset=utf-8' for js files
-            });
-            res.end(data);
-        }
-    });
-}
-//  处理其他静态资源的路由 
-/*app.use('/public', (req, res) => {  //拦截所有public文件夹下的请求
-    const filePath = req.url.split('?')[0]; // 获取请求路径，排除查询参数
-    console.log(filePath );
-    handleGetRequest(['public', filePath], res, true); //  确保所有静态资源都经过此函数
+app.listen(actualPort, () => {
+    console.log(`Server listening on port ${actualPort}`);
 });*/
-//  处理其他静态资源的路由 (重要!)
-app.use('/public', (req, res, next) => {
-    const filePath = req.url.split('?')[0];
-    const fullPath = path.join(__dirname, 'public', filePath);
-
-    fs.readFile(fullPath, (err, data) => {
-        if (err) {
-            console.error("Error reading file:", fullPath, err);
-            return next(); // 传递给下一个中间件（如果存在）或默认的错误处理程序
-        }
-        let contentType = 'text/plain'; // 默认 Content-Type
-        if (filePath.endsWith('.css')) {
-            contentType = 'text/css; charset=utf-8';
-        } else if (filePath.endsWith('.js')) {
-            contentType = 'text/javascript; charset=utf-8';
-        } else if (filePath.endsWith('.html')) {
-            contentType = 'text/html; charset=utf-8';
-        }
-        res.setHeader('Content-Type', contentType);
-        res.end(data);
-    });
+// 首页 - 导航页
+app.get('/',  async (req, res) => {//requireLogin,
+    res.redirect('/menu');
 });
-app.get('/test', (req, res) => {
-    console.log("233232");
-    //res.send('Test route is working!');
-    //res.sendFile('/vercel/path0/public/bootstrap.min.css');
-  //res.sendFile(path.join(__dirname, 'public', 'bootstrap.min.css'));
-  handleGetRequest(['public', 'bootstrap.min.css'], res, true); // 修改这里
-});
-app.get('/list', (req, res) => {
-  fs.readdir(path.join(__dirname, 'public'), (err, files) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send('Error listing files');
-    }
-    res.send(files);
-  });
+app.get('/menu',  (req, res) => {//requireLogin,
+    console.log(req);
+    res.render('login/dashboard');
 });
 function formatDate(date) {
     const year = date.getFullYear();
@@ -201,17 +142,4 @@ function formatDate(date) {
   };
   return date.toLocaleDateString('zh-CN', options).replace(/\//g, '-');*/
 }
-// 测试路由
-app.get('/test', (req, res) => {
-    handleGetRequest(['public', 'bootstrap.min.css'], res, true);
-});
-
-app.get('/list', (req, res) => {
-    fs.readdir(path.join(__dirname, 'public'), (err, files) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Server Error');
-        }
-        res.send(files);
-    });
-});
+module.exports = app;

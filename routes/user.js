@@ -96,13 +96,13 @@ const checkRegistrationLimit = async (req, res, next) => {
       });
     });
     // 导航页
-    app.get('/dashboard', requireLogin, (req, res) => {
+    /*app.get('/dashboard', requireLogin, (req, res) => {
       res.render('login/dashboard');
-    });
-    // 首页 - 导航页
+    });*/
+    /*// 首页 - 导航页
     app.get('/', requireLogin, async (req, res) => {
       res.redirect('/dashboard');
-    });
+    });*/
     // 修改密码页面
     app.get('/change-password', requireLogin, (req, res) => {
       res.render('login/change-password');
