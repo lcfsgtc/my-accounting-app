@@ -114,7 +114,7 @@ app.listen(port, () => {
 });
 // 自定义静态资源处理函数
 function handleGetRequest(filePath, res, isStatic = true) {
-    const fullPath = path.join(__dirname, ...filePath);
+    const fullPath = path.join(__dirname, filePath);
 
     fs.readFile(fullPath, (err, data) => {
         if (err) {
@@ -125,20 +125,45 @@ function handleGetRequest(filePath, res, isStatic = true) {
 
         if (isStatic) {
             // 如果是静态资源，不进行乱码处理，直接返回
+            console.log("静态资源文件");
             res.end(data);
         } else {
             // 否则，进行乱码处理
-            res.writeHead(200, {
-                'Content-Type': 'text/html;charset=utf-8',  // or 'text/javascript;charset=utf-8' for js files
+            console.log("非静态资源文件");
+            res.writeHead(200, {                
+                'Content-Type': 'text/javascript;charset=utf-8'//'text/html;charset=utf-8'//,  // or 'text/javascript;charset=utf-8' for js files
             });
             res.end(data);
         }
     });
 }
-//  处理其他静态资源的路由 (重要!)
-app.use('/public', (req, res) => {  //拦截所有public文件夹下的请求
+//  处理其他静态资源的路由 
+/*app.use('/public', (req, res) => {  //拦截所有public文件夹下的请求
     const filePath = req.url.split('?')[0]; // 获取请求路径，排除查询参数
+    console.log(filePath );
     handleGetRequest(['public', filePath], res, true); //  确保所有静态资源都经过此函数
+});*/
+//  处理其他静态资源的路由 (重要!)
+app.use('/public', (req, res, next) => {
+    const filePath = req.url.split('?')[0];
+    const fullPath = path.join(__dirname, 'public', filePath);
+
+    fs.readFile(fullPath, (err, data) => {
+        if (err) {
+            console.error("Error reading file:", fullPath, err);
+            return next(); // 传递给下一个中间件（如果存在）或默认的错误处理程序
+        }
+        let contentType = 'text/plain'; // 默认 Content-Type
+        if (filePath.endsWith('.css')) {
+            contentType = 'text/css; charset=utf-8';
+        } else if (filePath.endsWith('.js')) {
+            contentType = 'text/javascript; charset=utf-8';
+        } else if (filePath.endsWith('.html')) {
+            contentType = 'text/html; charset=utf-8';
+        }
+        res.setHeader('Content-Type', contentType);
+        res.end(data);
+    });
 });
 app.get('/test', (req, res) => {
     console.log("233232");
