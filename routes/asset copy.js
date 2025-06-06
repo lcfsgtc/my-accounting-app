@@ -1,9 +1,7 @@
 const path = require('path');
 const querystring = require('querystring');
 const mongoose = require('mongoose'); // 引入 Mongoose 模块
-const { Parser } = require('json2csv'); // 引入 json2csv 的 Parser
-
-module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatDate) => {
+module.exports = (app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate) => {
     // 资产列表页面
     app.get('/assets', requireLogin, async (req, res) => {
         try {
@@ -18,13 +16,15 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             }
             if (query.endDate) {
                 const endDate = new Date(query.endDate);
-                endDate.setHours(23, 59, 59, 999);
+                endDate.setHours(23, 59, 59, 999); 
                 findQuery.purchaseDate = { ...findQuery.purchaseDate, $lte: endDate };
             }
-            if (query.type) {
+            if (query.type) { 
                 findQuery.type = { $regex: new RegExp(query.type, 'i') };
             }
-            // Removed: if (query.subcategory) { findQuery.subcategory = { $regex: new RegExp(query.subcategory, 'i') }; }
+            if (query.subcategory) { 
+                findQuery.subcategory = { $regex: new RegExp(query.subcategory, 'i') };
+            }
 
             const assets = await Asset.find(findQuery).sort({ purchaseDate: -1 });
 
@@ -48,7 +48,7 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             totalCost = totalCost.toFixed(2);
             totalCurrentValue = totalCurrentValue.toFixed(2);
 
-            // ====== 生成 queryString ======
+            // ====== 新增：生成 queryString ======
             const queryString = querystring.stringify(query); // 将查询对象转换为查询字符串
             // 如果存在查询参数，添加 '?' 前缀
             const fullQueryString = queryString ? `?${queryString}` : '';
@@ -60,95 +60,45 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 totalCost: totalCost,
                 totalCurrentValue: totalCurrentValue,
                 query: query, // 用于填充搜索表单
-                queryString: fullQueryString // 用于导出链接
+                queryString: fullQueryString // 新增：用于导出链接
             });
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');
         }
     });
-
-    // 导出资产数据
-    app.get('/assets/export', requireLogin, async (req, res) => {
+    // 资产列表页面
+    /*app.get('/assets', requireLogin, async (req, res) => {
         try {
-            const userId = req.session.userId;
-            const query = req.query; // 获取所有查询参数
+            const assets = await Asset.find({ user: req.session.userId }); // 只获取当前用户的资产
+            let totalCost = 0;
+            let totalCurrentValue = 0;
+            assets.forEach(asset => {
+                totalCost += asset.cost * asset.quantity;
+                totalCurrentValue += asset.currentValue * asset.quantity;
+            });
 
-            let findQuery = { user: userId }; // 初始查询条件
-
-            // 根据查询参数构建筛选条件 (与 /assets 路由相同)
-            if (query.startDate) {
-                findQuery.purchaseDate = { ...findQuery.purchaseDate, $gte: new Date(query.startDate) };
-            }
-            if (query.endDate) {
-                const endDate = new Date(query.endDate);
-                endDate.setHours(23, 59, 59, 999);
-                findQuery.purchaseDate = { ...findQuery.purchaseDate, $lte: endDate };
-            }
-            if (query.type) {
-                findQuery.type = { $regex: new RegExp(query.type, 'i') };
-            }
-            // Removed: if (query.subcategory) { findQuery.subcategory = { $regex: new RegExp(query.subcategory, 'i') }; }
-
-            const assetsToExport = await Asset.find(findQuery).sort({ purchaseDate: -1 }).lean(); // .lean() converts Mongoose documents to plain JavaScript objects for easier processing
-
-            // Define fields for CSV
-            const fields = [
-                {
-                    label: '名称',
-                    value: 'name'
-                },
-                {
-                    label: '类型',
-                    value: 'type'
-                },
-                {
-                    label: '数量',
-                    value: 'quantity'
-                },
-                {
-                    label: '成本',
-                    value: 'cost'
-                },
-                {
-                    label: '现值',
-                    value: 'currentValue'
-                },
-                {
-                    label: '购买日期',
-                    value: (row) => row.purchaseDate ? row.purchaseDate.toISOString().split('T')[0]: '' // formatDate(row.purchaseDate) 
-                },
-                {
-                    label: '状况',
-                    value: 'condition'
-                },
-                {
-                    label: '折旧方法',
-                    value: 'depreciationMethod'
-                },
-                {
-                    label: '折旧率',
-                    value: 'depreciationRate'
-                },
-                {
-                    label: '备注',
-                    value: 'notes'
+            // 统计每种类型的资产数量
+            const assetTypeCounts = {};
+            assets.forEach(asset => {
+                if (assetTypeCounts[asset.type]) {
+                    assetTypeCounts[asset.type] += asset.currentValue
+                } else {
+                    assetTypeCounts[asset.type] = asset.currentValue;
                 }
-            ];
-            console.log('Type of Parser:', typeof Parser);
-            console.log('Parser itself:', Parser);
-            const json2csvParser = new Parser({ fields });
-            const csv = json2csvParser.parse(assetsToExport);
+            });
 
-            res.header('Content-Type', 'text/csv');
-            res.attachment('assets_export.csv');
-            res.send(csv);
-
+            res.render('assets/list', {
+                assets: assets,
+                assetTypeCounts: assetTypeCounts,
+                totalCost: totalCost,
+                totalCurrentValue: totalCurrentValue
+            });
         } catch (err) {
             console.error(err);
-            res.status(500).send('Error exporting data: ' + err.message);
+            res.status(500).send('Server Error');
         }
-    });
+    });*/
 
     // 添加资产页面
     app.get('/assets/add', requireLogin, (req, res) => {
@@ -163,11 +113,11 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 type: req.body.type,
                 quantity: req.body.quantity,
                 cost: req.body.cost,
-                currentValue: req.body.currentValue,
+                currentValue: req.body.currentValue,                
                 purchaseDate: req.body.purchaseDate,
                 condition: req.body.condition,
                 depreciationMethod: req.body.depreciationMethod,
-                depreciationRate: req.body.depreciationRate,
+                depreciationRate: req.body.depreciationRate,                
                 notes: req.body.notes,
                 user: req.session.userId  // 设置用户 ID
             });
@@ -201,11 +151,11 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 type: req.body.type,
                 quantity: req.body.quantity,
                 cost: req.body.cost,
-                currentValue: req.body.currentValue,
+                currentValue: req.body.currentValue,                
                 purchaseDate: req.body.purchaseDate,
                 condition: req.body.condition,
                 depreciationMethod: req.body.depreciationMethod,
-                depreciationRate: req.body.depreciationRate,
+                depreciationRate: req.body.depreciationRate,                
                 notes: req.body.notes
             });
             res.redirect('/assets');
@@ -235,8 +185,9 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             }
             res.render('assets/view', { asset: asset });
         } catch (err) {
-                console.error(err);
+            console.error(err);
             res.status(500).send('Server Error');
         }
     });
+
 };

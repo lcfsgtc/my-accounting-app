@@ -116,9 +116,9 @@ app.listen(actualPort, () => {
 });*/
 // 首页 - 导航页
 app.get('/', requireLogin, async (req, res) => {
-    res.redirect('/menu');
+    res.redirect('/dashboard');
 });
-app.get('/menu', requireLogin, (req, res) => {
+app.get('/dashboard', requireLogin, (req, res) => {
     console.log(req);
     res.render('login/dashboard');
 });
