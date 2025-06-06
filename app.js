@@ -115,10 +115,10 @@ app.listen(actualPort, () => {
     console.log(`Server listening on port ${actualPort}`);
 });*/
 // 首页 - 导航页
-app.get('/',  async (req, res) => {//requireLogin,
+app.get('/', requireLogin, async (req, res) => {
     res.redirect('/menu');
 });
-app.get('/menu',  (req, res) => {//requireLogin,
+app.get('/menu', requireLogin, (req, res) => {
     console.log(req);
     res.render('login/dashboard');
 });
