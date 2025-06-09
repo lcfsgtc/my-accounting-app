@@ -204,6 +204,32 @@ const checkRegistrationLimit = async (req, res, next) => {
         res.status(500).send('Server Error');
       }
     });
+    // 重置用户密码功能 (管理员权限)
+    app.post('/admin/users/reset-password/:id', requireAdmin, async (req, res) => {
+        try {
+            const userId = req.params.id;
+            const DEFAULT_PASSWORD = '123456'; // 定义默认重置密码
+
+            // 查找用户
+            const user = await User.findById(userId);
+            if (!user) {
+                return res.status(404).send('User not found.');
+            }
+
+            // 对新密码进行哈希处理
+            const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+
+            // 更新密码
+            user.password = hashedPassword;
+            await user.save();
+
+            console.log(`User ${user.username} (ID: ${userId}) password reset to default.`);
+            res.redirect('/admin/users'); // 重定向回用户管理页面
+        } catch (err) {
+            console.error('Error resetting user password:', err);
+            res.status(500).send('Server Error');
+        }
+    });    
     // 创建管理员账户 (只运行一次)
     const createAdminUser = async () => {
       try {

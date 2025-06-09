@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>导航页</title>
+    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+    <link rel="stylesheet" href="/bootstrap.min.css">  
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .nav-item {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>导航页</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <h2>管理</h2>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="/incomes" class="btn btn-primary btn-block">收入管理</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/expenses" class="btn btn-success btn-block">支出管理</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/assets" class="btn btn-secondary btn-block">资产盘点</a> 
+                </li>                
+                <li class="nav-item">
+                    <a href="/diary" class="btn btn-info btn-block">日记管理</a>
+                </li>
+            </ul>
+            <% if (locals.session && locals.session.isAdmin) { %>
+                <a href="/admin/users" class="btn btn-warning">用户管理</a>
+            <% } %>
+            <a href="/logout" class="btn btn-danger">登出</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

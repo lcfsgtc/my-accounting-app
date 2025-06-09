@@ -120,7 +120,7 @@ app.get('/', requireLogin, async (req, res) => {
 });
 app.get('/dashboard', requireLogin, (req, res) => {
     console.log(req);
-    res.render('login/dashboard');
+    res.render('login/dashboard',{ session: req.session });
 });
 function formatDate(date) {
     const year = date.getFullYear();

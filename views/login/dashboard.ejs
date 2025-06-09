@@ -1,44 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>导航页</title>
-    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
-    <link rel="stylesheet" href="/bootstrap.min.css">  
+    <link rel="stylesheet" href="/bootstrap.min.css">  
     <style>
         body {
-            padding-top: 20px;
+            background-color: #f8f9fa; /* 轻微的背景色 */
+        }
+        .container {
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: .5rem;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 500;
+            border-bottom: none;
+            border-top-left-radius: .5rem;
+            border-top-right-radius: .5rem;
         }
         .nav-item {
-            margin-bottom: 10px;
+            margin-bottom: 15px; /* 增加导航项之间的间距 */
+        }
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        .section-title {
+            margin-top: 30px;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            color: #343a40;
+        }
+        .btn-action-group {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* 按钮间距 */
+        }
+        @media (min-width: 768px) { /* Medium devices (tablets) and up */
+            .btn-action-group {
+                flex-direction: row; /* 在较大屏幕上并排显示 */
+                justify-content: flex-start;
+            }
+            .btn-action-group .btn {
+                width: auto; /* 恢复自动宽度 */
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>导航页</h1>
-    <div class="row">
-        <div class="col-md-4">
-            <h2>管理</h2>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a href="/incomes" class="btn btn-primary btn-block">收入管理</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/expenses" class="btn btn-success btn-block">支出管理</a>
-                </li>
-                <li class="nav-item">
-                    <a href="/assets" class="btn btn-secondary btn-block">资产盘点</a> 
-                </li>                
-                <li class="nav-item">
-                    <a href="/diary" class="btn btn-info btn-block">日记管理</a>
-                </li>
-            </ul>
-            <% if (locals.session && locals.session.isAdmin) { %>
-                <a href="/admin/users" class="btn btn-warning">用户管理</a>
-            <% } %>
-            <a href="/logout" class="btn btn-danger">登出</a>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        导航页
+                    </div>
+                    <div class="card-body">
+                        <h2 class="section-title">数据管理</h2>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a href="/incomes" class="btn btn-primary btn-block">收入管理</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/expenses" class="btn btn-success btn-block">支出管理</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/assets" class="btn btn-secondary btn-block">资产盘点</a> 
+                            </li>                
+                            <li class="nav-item">
+                                <a href="/diary" class="btn btn-info btn-block">日记管理</a>
+                            </li>
+                        </ul>
+
+                        <h2 class="section-title">账户操作</h2>
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a href="/change-password" class="btn btn-warning btn-block">修改密码</a>
+                            </li>
+                            <% if (locals.session && locals.session.isAdmin) { %>
+                                <li class="nav-item">
+                                    <a href="/admin/users" class="btn btn-danger btn-block">用户管理</a>
+                                </li>
+                            <% } %>
+                            <li class="nav-item">
+                                <a href="/logout" class="btn btn-dark btn-block">登出</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
 </body>
 </html>

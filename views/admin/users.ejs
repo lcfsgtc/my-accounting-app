@@ -1,42 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-  <title>用户管理</title>
-  <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
-  <link rel="stylesheet" href="/bootstrap.min.css">
-  <style>
-    body { padding-top: 20px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: .5rem;
+            margin-bottom: 20px; /* Add margin at the bottom of the card */
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 500;
+            border-bottom: none;
+            border-top-left-radius: .5rem;
+            border-top-right-radius: .5rem;
+        }
+        .table-responsive {
+            margin-top: 20px;
+        }
+        .table thead th {
+            background-color: #e9ecef; /* Light background for table header */
+            border-bottom: 2px solid #dee2e6;
+        }
+        .table tbody tr:hover {
+            background-color: #f2f2f2;
+        }
+        .btn-action-group {
+            display: flex;
+            gap: 5px; /* Small gap between action buttons */
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center; /* Center buttons on smaller screens */
+        }
+        /* Adjust column width for form on different screen sizes */
+        @media (min-width: 576px) { /* Small devices (tablets) */
+            .main-content-column {
+                max-width: 900px; /* Limit content width on larger screens */
+            }
+        }
+        @media (min-width: 992px) { /* Large devices (desktops) */
+            .main-content-column {
+                max-width: 1000px; /* Further limit content width for very large screens */
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>用户管理</h1>
-    <a href="/" class="btn btn-secondary">返回首页</a>
-    <hr>
-    <h2>用户列表</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>用户名</th>
-          <th>是否是管理员</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% users.forEach(user => { %>
-          <tr>
-            <td><%= user.username %></td>
-            <td><%= user.isAdmin ? '是' : '否' %></td>
-            <td>
-              <a href="/admin/users/edit/<%= user._id %>" class="btn btn-sm btn-warning">编辑</a>
-              <form action="/admin/users/delete/<%= user._id %>" method="POST" style="display: inline;">
-                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</button>
-              </form>
-            </td>
-          </tr>
-        <% }); %>
-      </tbody>
-    </table>
-  </div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 main-content-column">
+                <div class="card">
+                    <div class="card-header text-center">
+                        用户管理
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <a href="/dashboard" class="btn btn-secondary">返回导航页</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>管理员</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% users.forEach(function(user) { %>
+                                        <tr>
+                                            <td><%= user.username %></td>
+                                            <td>
+                                                <% if (user.isAdmin) { %>
+                                                    <span class="badge badge-success">是</span>
+                                                <% } else { %>
+                                                    <span class="badge badge-info">否</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <div class="btn-action-group">
+                                                    <a href="/admin/users/edit/<%= user._id %>" class="btn btn-sm btn-primary">编辑</a>
+                                                    <form action="/admin/users/reset-password/<%= user._id %>" method="POST" onsubmit="return confirm('确定要重置该用户的密码吗？重置后密码将变为：123456');">
+                                                        <button type="submit" class="btn btn-sm btn-warning">重置密码</button>
+                                                    </form>
+                                                    <form action="/admin/users/delete/<%= user._id %>" method="POST" onsubmit="return confirm('确定要删除该用户吗？');">
+                                                        <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
 </body>
 </html>

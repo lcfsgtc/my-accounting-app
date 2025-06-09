@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>用户管理</title>
+  <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
+  <link rel="stylesheet" href="/bootstrap.min.css">
+  <style>
+    body { padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>用户管理</h1>
+    <a href="/" class="btn btn-secondary">返回首页</a>
+    <hr>
+    <h2>用户列表</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>用户名</th>
+          <th>是否是管理员</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <td><%= user.username %></td>
+            <td><%= user.isAdmin ? '是' : '否' %></td>
+            <td>
+              <a href="/admin/users/edit/<%= user._id %>" class="btn btn-sm btn-warning">编辑</a>
+              <form action="/admin/users/delete/<%= user._id %>" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
