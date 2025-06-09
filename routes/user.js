@@ -207,8 +207,8 @@ const checkRegistrationLimit = async (req, res, next) => {
     // 创建管理员账户 (只运行一次)
     const createAdminUser = async () => {
       try {
-        const adminUsername = "admin";
-        const adminPassword = "lcf123456"; // 替换为你想要的管理员密码
+        const adminUsername = "guanli";
+        const adminPassword = "111111"; // 替换为你想要的管理员密码
 
         // 检查管理员账户是否已存在
         const existingAdmin = await User.findOne({ username: adminUsername });
