@@ -1,81 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>添加日记</title>
-    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
     <link rel="stylesheet" href="/bootstrap.min.css">
     <style>
         body {
-            padding-top: 20px;
+            background-color: #f8f9fa; /* 轻微的背景色，使界面更柔和 */
+        }
+        .container {
+            padding-top: 40px; /* 增加顶部内边距，让内容更居中 */
+            padding-bottom: 40px; /* 增加底部内边距 */
+        }
+        .card {
+            border: none; /* 移除卡片边框 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 添加柔和阴影 */
+            border-radius: .5rem; /* 更大的圆角 */
+        }
+        .card-header {
+            background-color: #007bff; /* 主色调背景 */
+            color: white; /* 白色文字 */
+            font-size: 1.5rem; /* 标题字号 */
+            font-weight: 500; /* 字重 */
+            border-bottom: none; /* 移除底部边框 */
+            border-top-left-radius: .5rem; /* 匹配卡片圆角 */
+            border-top-right-radius: .5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem; /* 增加表单组之间的垂直间距 */
+        }
+        .form-control {
+            border-radius: .25rem; /* 默认输入框圆角 */
+        }
+        .btn-group-custom {
+            display: flex;
+            flex-wrap: wrap; /* 按钮在小屏幕上换行 */
+            gap: 15px; /* 按钮之间间距 */
+            margin-top: 20px; /* 按钮组上方间距 */
+        }
+        /* For older browsers not fully supporting gap, use margin-right fallback */
+        .btn-group-custom .btn:not(:last-child) {
+            margin-right: 15px; /* Fallback spacing for buttons */
+        }
+        /* Adjust column width for form on different screen sizes */
+        @media (min-width: 576px) { /* Small devices (tablets) */
+            .form-column {
+                max-width: 600px; /* Limit form width on larger screens */
+            }
+        }
+        @media (min-width: 992px) { /* Large devices (desktops) */
+            .form-column {
+                max-width: 700px; /* Further limit form width for very large screens */
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>添加日记</h1>
-    <form action="/diary/add" method="POST" enctype="multipart/form-data">  <!-- 务必添加 enctype="multipart/form-data" -->
-        <div class="form-group">
-            <label for="date">日期:</label>
-            <input type="date" class="form-control" id="date" name="date" required>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 form-column">
+                <div class="card">
+                    <div class="card-header text-center">
+                        添加日记
+                    </div>
+                    <div class="card-body">
+                        <form action="/diary/add" method="POST" enctype="multipart/form-data"> <div class="form-group">
+                                <label for="date">日期:</label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="title">标题:</label>
+                                <input type="text" class="form-control" id="title" name="title" required> </div>
+                            <div class="form-group">
+                                <label for="weather">天气:</label>
+                                <input type="text" class="form-control" id="weather" name="weather">
+                            </div>
+                            <div class="form-group">
+                                <label for="mood">心情:</label>
+                                <select class="form-control" id="mood" name="mood">
+                                    <option value="">请选择</option>
+                                    <option value="快乐">快乐</option>
+                                    <option value="悲伤">悲伤</option>
+                                    <option value="平静">平静</option>
+                                    <option value="激动">激动</option>
+                                    <option value="沮丧">沮丧</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="location">地点:</label>
+                                <input type="text" class="form-control" id="location" name="location">
+                            </div>
+                            <div class="form-group">
+                                <label for="people">人物:(使用 英文 逗号 , 分割)</label>
+                                <input type="text" class="form-control" id="people" name="people">
+                            </div>
+                            <div class="form-group">
+                                <label for="tags">标签:(使用 英文 逗号 , 分割)</label>
+                                <input type="text" class="form-control" id="tags" name="tags">
+                            </div>
+                            <div class="form-group">
+                                <label for="planList">计划列表:(一行一项)</label>
+                                <textarea class="form-control" id="planList" name="planList" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="eventList">事件列表:(一行一项)</label>
+                                <textarea class="form-control" id="eventList" name="eventList" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="feeling">心情随笔:</label>
+                                <textarea class="form-control" id="feeling" name="feeling" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="summary">每日总结:</label>
+                                <textarea class="form-control" id="summary" name="summary" rows="5" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="images">图片:</label>
+                                <input type="file" class="form-control-file" id="images" name="images" multiple accept="image/*"> 
+                            </div>
+                            <div class="form-group form-check"> <input type="checkbox" class="form-check-input" id="isPublic" name="isPublic">
+                                <label class="form-check-label" for="isPublic">公开日记</label>
+                            </div>
+                            
+                            <div class="btn-group-custom">
+                                <button type="submit" class="btn btn-primary">保存</button>
+                                <a href="/diary" class="btn btn-secondary">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-         <div class="form-group">
-            <label for="title">标题:</label>
-            <input type="text" class="form-control" id="title" name="title">
-        </div>
-        <div class="form-group">
-            <label for="weather">天气:</label>
-            <input type="text" class="form-control" id="weather" name="weather">
-        </div>
-        <div class="form-group">
-            <label for="mood">心情:</label>
-            <select class="form-control" id="mood" name="mood">
-                <option value="">请选择</option>
-                <option value="happy">快乐</option>
-                <option value="sad">悲伤</option>
-                <option value="neutral">平静</option>
-                <option value="excited">激动</option>
-                <option value="frustrated">沮丧</option>
-            </select>
-        </div>
-          <div class="form-group">
-            <label for="location">地点:</label>
-            <input type="text" class="form-control" id="location" name="location">
-        </div>
-         <div class="form-group">
-            <label for="people">人物:(使用 英文 逗号 , 分割)</label>
-            <input type="text" class="form-control" id="people" name="people">
-        </div>
-         <div class="form-group">
-            <label for="tags">标签:(使用 英文 逗号 , 分割)</label>
-            <input type="text" class="form-control" id="tags" name="tags">
-        </div>
-        <div class="form-group">
-            <label for="planList">计划列表:(一行一项)</label>
-            <textarea class="form-control" id="planList" name="planList" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="eventList">事件列表:(一行一项)</label>
-            <textarea class="form-control" id="eventList" name="eventList" rows="3"></textarea>
-        </div>
-         <div class="form-group">
-            <label for="feeling">心情随笔:</label>
-            <textarea class="form-control" id="feeling" name="feeling" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="summary">每日总结:</label>
-            <textarea class="form-control" id="summary" name="summary" rows="5" required></textarea>
-        </div>
-         <div class="form-group">
-            <label for="images">图片:</label>
-            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">  <!-- 添加多文件上传 -->
-        </div>
-        <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="isPublic" name="isPublic">
-            <label class="form-check-label" for="isPublic">公开日记</label>
-        </div>
-        <button type="submit" class="btn btn-primary">保存</button>
-        <a href="/diary" class="btn btn-secondary">取消</a>
-    </form>
-</div>
+    </div>
+
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
 </body>
 </html>

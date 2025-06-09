@@ -5,7 +5,7 @@ const diarySchema = new mongoose.Schema({
     date: { type: Date, required: true },
     title: { type: String, default: '无标题' }, // 添加标题
     weather: { type: String },
-    mood: { type: String, enum: ['happy', 'sad', 'neutral', 'excited', 'frustrated'] }, // 使用枚举限制心情选项
+    mood: { type: String, enum: ['快乐', '悲伤', '平静', '激动', '沮丧'] }, // 使用枚举限制心情选项
     location: { type: String }, // 地点
     people: [{ type: String }], // 相关人物列表
     tags: [{ type: String }], // 标签，用于分类日记
