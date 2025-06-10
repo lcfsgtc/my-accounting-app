@@ -72,10 +72,24 @@
                             <div class="form-group">
                                 <label for="title">标题:</label>
                                 <input type="text" class="form-control" id="title" name="title" required> </div>
-                            <div class="form-group">
+                            <!--div class="form-group">
                                 <label for="weather">天气:</label>
                                 <input type="text" class="form-control" id="weather" name="weather">
-                            </div>
+                            </div-->
+                            <div class="form-group">
+                                <label for="weather">天气:</label>
+                                <select class="form-control" id="weather" name="weather">
+                                    <option value="">请选择</option>
+                                    <option value="晴">晴</option>
+                                    <option value="多云">多云</option>
+                                    <option value="阴">阴</option>
+                                    <option value="雨">雨</option>
+                                    <option value="雪">雪</option>
+                                    <option value="风">风</option>
+                                    <option value="雾">雾</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>            
                             <div class="form-group">
                                 <label for="mood">心情:</label>
                                 <select class="form-control" id="mood" name="mood">
@@ -113,7 +127,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="summary">每日总结:</label>
-                                <textarea class="form-control" id="summary" name="summary" rows="5" required></textarea>
+                                <textarea class="form-control" id="summary" name="summary" rows="5" ></textarea>
                             </div>
                             <div class="form-group">
                                 <label for="images">图片:</label>

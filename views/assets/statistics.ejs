@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资产统计</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            min-height: 100vh;
+        }
+        .main-content-area {
+            flex-grow: 1;
+            padding-left: 15px;
+            padding-right: 15px; /* Add right padding as well */
+        }
+        @media (min-width: 768px) {
+            .main-content-area {
+                padding-left: 30px;
+                padding-right: 30px;
+            }
+        }
+        .filter-form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: .5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        .filter-form .form-group {
+            margin-bottom: 1rem;
+        }
+        .filter-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .statistics-results {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: .5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .statistics-results .list-group-item {
+            font-size: 1.1rem;
+            padding: 10px 15px;
+        }
+        .statistics-results .list-group-item .badge {
+            font-size: 0.9em;
+            padding: 0.5em 0.7em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid app-container">
+        <%- include('../menu/sidebar.ejs') %>
+        <div class="col-12 col-sm-8 col-md-10 main-content-area">
+            <h1>资产统计</h1>
+
+            <div class="filter-form">
+                <form action="/assets/statistics" method="GET">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="type">资产类型:</label>
+                            <select class="form-control" id="type" name="type">
+                                <option value="">所有类型</option>
+                                <% distinctAssetTypes.forEach(type => { %>
+                                    <option value="<%= type %>" <%= query.type === type ? 'selected' : '' %>>
+                                        <%= type %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="startDate">开始日期:</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" value="<%= typeof query.startDate !== 'undefined' ? query.startDate : '' %>">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="endDate">结束日期:</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof query.endDate !== 'undefined' ? query.endDate : '' %>">
+                        </div>
+                    </div>
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn btn-primary">统计</button>
+                        <a href="/assets/statistics" class="btn btn-secondary">重置</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="statistics-results">
+                <h2>统计结果 (按类型现值汇总)</h2>
+                <% if (Object.keys(statistics).length > 0) { %>
+                    <ul class="list-group">
+                        <% let totalStatisticalValue = 0; %>
+                        <% for (const type in statistics) { %>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong><%= type %></strong>
+                                <span class="badge badge-success badge-pill">
+                                    <%= statistics[type].toFixed(2) %>
+                                </span>
+                            </li>
+                            <% totalStatisticalValue += statistics[type]; %>
+                        <% } %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center mt-3">
+                            <strong>总计:</strong>
+                            <span class="badge badge-primary badge-pill">
+                                <%= totalStatisticalValue.toFixed(2) %>
+                            </span>
+                        </li>
+                    </ul>
+                <% } else { %>
+                    <p class="alert alert-info">没有找到符合条件的资产数据。</p>
+                <% } %>
+            </div>
+
+            <a href="/assets" class="btn btn-secondary mt-4">返回资产列表</a>
+        </div>
+    </div>
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
+</body>
+</html>

@@ -34,8 +34,10 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 totalCost += parseFloat(asset.cost || 0) * parseFloat(asset.quantity || 0);
                 totalCurrentValue += parseFloat(asset.currentValue || 0) * parseFloat(asset.quantity || 0);
             });
-
+            // 在列表页直接计算类型统计 (与统计页逻辑相似但用于列表展示)
             const assetTypeCounts = {};
+            // 用于获取所有不重复的资产类型，供统计页面下拉列表使用
+            const distinctAssetTypes = new Set();            
             assets.forEach(asset => {
                 const value = parseFloat(asset.currentValue || 0) * parseFloat(asset.quantity || 0);
                 if (assetTypeCounts[asset.type]) {
@@ -43,6 +45,7 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 } else {
                     assetTypeCounts[asset.type] = value;
                 }
+                distinctAssetTypes.add(asset.type); // 收集所有类型
             });
 
             totalCost = totalCost.toFixed(2);
@@ -60,14 +63,63 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 totalCost: totalCost,
                 totalCurrentValue: totalCurrentValue,
                 query: query, // 用于填充搜索表单
-                queryString: fullQueryString // 用于导出链接
+                queryString: fullQueryString ,// 用于导出链接
+                distinctAssetTypes: Array.from(distinctAssetTypes).sort() // 传递所有不重复的资产类型
             });
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');
         }
     });
+    // 新增：资产统计页面
+    app.get('/assets/statistics', requireLogin, async (req, res) => {
+        try {
+            const userId = req.session.userId;
+            const { type, startDate, endDate } = req.query; // 获取查询参数
 
+            let findQuery = { user: userId }; // 初始查询条件
+
+            if (startDate) {
+                findQuery.purchaseDate = { ...findQuery.purchaseDate, $gte: new Date(startDate) };
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // 设置到当天的最后一刻
+                findQuery.purchaseDate = { ...findQuery.purchaseDate, $lte: end };
+            }
+            if (type && type !== '') { // 如果类型不为空，则添加筛选条件
+                findQuery.type = type;
+            }
+
+            // 获取所有符合条件的资产
+            const assets = await Asset.find(findQuery);
+
+            // 统计按类型汇总的现值
+            const statistics = {};
+            assets.forEach(asset => {
+                const value = parseFloat(asset.currentValue || 0) * parseFloat(asset.quantity || 0);
+                if (statistics[asset.type]) {
+                    statistics[asset.type] += value;
+                } else {
+                    statistics[asset.type] = value;
+                }
+            });
+
+            // 获取所有不重复的资产类型，用于统计页面的类型下拉列表
+            const distinctAssetTypes = await Asset.distinct('type', { user: userId });
+
+            res.render('assets/statistics', {
+                statistics: statistics,
+                query: req.query, // 将查询参数传回前端，以便填充表单
+                distinctAssetTypes: distinctAssetTypes.sort(), // 传递不重复的类型列表
+                formatDate: formatDate // 传递 formatDate 辅助函数
+            });
+
+        } catch (err) {
+            console.error('Error fetching asset statistics:', err);
+            res.status(500).send('Server Error: ' + err.message);
+        }
+    });
     // 导出资产数据
     app.get('/assets/export', requireLogin, async (req, res) => {
         try {

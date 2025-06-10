@@ -113,10 +113,24 @@
                             <div class="form-group">
                                 <label for="title">标题:</label>
                                 <input type="text" class="form-control" id="title" name="title" value="<%= diary.title %>" required> </div>
-                            <div class="form-group">
+                            <!--div class="form-group">
                                 <label for="weather">天气:</label>
                                 <input type="text" class="form-control" id="weather" name="weather" value="<%= diary.weather %>">
-                            </div>
+                            </div-->
+                            <div class="form-group">
+                                <label for="weather">天气:</label>
+                                <select class="form-control" id="weather" name="weather">
+                                    <option value="" <%= diary.weather === '' ? 'selected' : '' %>>请选择</option>
+                                    <option value="晴" <%= diary.weather === "晴" ? 'selected' : '' %>>晴</option>
+                                    <option value="多云" <%= diary.weather === "多云" ? 'selected' : '' %>>多云</option>
+                                    <option value="阴" <%= diary.weather === "阴" ? 'selected' : '' %>>阴</option>
+                                    <option value="雨" <%= diary.weather === "雨" ? 'selected' : '' %>>雨</option>
+                                    <option value="雪" <%= diary.weather === "雪" ? 'selected' : '' %>>雪</option>
+                                    <option value="风" <%= diary.weather === "风" ? 'selected' : '' %>>风</option>
+                                    <option value="雾" <%= diary.weather === "雾" ? 'selected' : '' %>>雾</option>
+                                    <option value="其他" <%= diary.weather === "其他" ? 'selected' : '' %>>其他</option>
+                                </select>
+                            </div>    
                             <div class="form-group">
                                 <label for="mood">心情:</label>
                                 <select class="form-control" id="mood" name="mood">
@@ -154,7 +168,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="summary">每日总结:</label>
-                                <textarea class="form-control" id="summary" name="summary" rows="5" required><%= diary.summary %></textarea>
+                                <textarea class="form-control" id="summary" name="summary" rows="3" ><%= diary.summary %></textarea>
                             </div>
                             
                             <div class="form-group">
