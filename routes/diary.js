@@ -173,6 +173,258 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
     // 日记统计路由
     app.get('/diary/statistics', requireLogin, async (req, res) => {
         try {
+            const { startDate, endDate, mood, weather, location, tags, period, publicOnly } = req.query;
+            const userId = req.session.userId;
+
+            let match = { userId: new mongoose.Types.ObjectId(String(userId)) };
+
+            // 1. 时间段过滤
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // 确保包含结束日期的全天
+                match.date = { $gte: start, $lte: end };
+            }
+
+            // 2. 心情过滤
+            if (mood) {
+                match.mood = mood;
+            }
+
+            // 3. 天气过滤
+            if (weather) {
+                match.weather = weather;
+            }
+
+            // 4. 地点过滤 (精确匹配)
+            if (location) {
+                match.location = location;
+            }
+
+            // 5. 标签过滤 (至少包含一个指定标签)
+            if (tags) {
+                const tagsArray = Array.isArray(tags) ? tags : tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+                if (tagsArray.length > 0) {
+                    match.tags = { $in: tagsArray };
+                }
+            }
+
+            // 6. 公开/私人日记过滤
+            if (publicOnly === 'on') {
+                match.isPublic = true;
+            }
+
+            // 构建聚合管道
+            let pipeline = [ { $match: match } ];
+
+            // 根据是否按时间维度分组，决定第一个 $group 阶段的 _id
+            let groupById = null; // 默认整体统计
+            if (period === 'year') {
+                groupById = { year: { $year: '$date' } };
+            } else if (period === 'month') {
+                groupById = { year: { $year: '$date' }, month: { $month: '$date' } };
+            } else if (period === 'day') {
+                groupById = { year: { $year: '$date' }, month: { $month: '$date' }, day: { $dayOfMonth: '$date' } };
+            }
+
+            // 第一个 $group 阶段：收集所有需要统计的原始数据
+            pipeline.push({
+                $group: {
+                    _id: groupById,
+                    totalDiaries: { $sum: 1 },
+                    allMoods: { $push: '$mood' }, // 收集所有心情
+                    allWeathers: { $push: '$weather' }, // 收集所有天气
+                    allLocations: { $push: '$location' }, // 收集所有地点
+                    allTagsArrays: { $push: '$tags' } // 收集所有标签数组 (例如: [["tag1", "tag2"], ["tag3"]])
+                }
+            });
+
+            // 第二个 $project 阶段：计算各种分布的频率
+            pipeline.push({
+                $project: {
+                    _id: '$_id', // 保留分组ID
+                    totalDiaries: 1,
+                    // 计算心情分布
+                    moodDistribution: {
+                        $filter: { // 过滤掉空字符串的心情
+                            input: {
+                                $map: {
+                                    input: { $setUnion: '$allMoods' }, // 获取所有唯一的心情
+                                    as: 'm',
+                                    in: {
+                                        mood: '$$m',
+                                        count: {
+                                            $size: {
+                                                $filter: {
+                                                    input: '$allMoods',
+                                                    as: 'item',
+                                                    cond: { $eq: ['$$item', '$$m'] }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            as: 'moodItem',
+                            cond: { $ne: ['$$moodItem.mood', ''] } // 确保心情值不为空字符串
+                        }
+                    },
+                    // 计算天气分布
+                    weatherDistribution: {
+                        $filter: { // 过滤掉空字符串的天气
+                            input: {
+                                $map: {
+                                    input: { $setUnion: '$allWeathers' },
+                                    as: 'w',
+                                    in: {
+                                        weather: '$$w',
+                                        count: {
+                                            $size: {
+                                                $filter: {
+                                                    input: '$allWeathers',
+                                                    as: 'item',
+                                                    cond: { $eq: ['$$item', '$$w'] }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            as: 'weatherItem',
+                            cond: { $ne: ['$$weatherItem.weather', ''] }
+                        }
+                    },
+                    // 计算地点分布
+                    locationDistribution: {
+                        $filter: { // 过滤掉空字符串的地点
+                            input: {
+                                $map: {
+                                    input: { $setUnion: '$allLocations' },
+                                    as: 'loc',
+                                    in: {
+                                        location: '$$loc',
+                                        count: {
+                                            $size: {
+                                                $filter: {
+                                                    input: '$allLocations',
+                                                    as: 'item',
+                                                    cond: { $eq: ['$$item', '$$loc'] }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            as: 'locationItem',
+                            cond: { $ne: ['$$locationItem.location', ''] }
+                        }
+                    },
+                    // 计算标签分布：先扁平化 allTagsArrays，再计算频率
+                    tagDistribution: {
+                        $let: {
+                            vars: {
+                                // 扁平化 allTagsArrays，将所有标签合并到一个数组
+                                flattenedTags: {
+                                    $reduce: {
+                                        input: '$allTagsArrays',
+                                        initialValue: [],
+                                        in: { $concatArrays: ['$$value', '$$this'] }
+                                    }
+                                }
+                            },
+                            in: {
+                                $filter: { // 过滤掉空字符串的标签
+                                    input: {
+                                        $map: {
+                                            input: { $setUnion: '$$flattenedTags' }, // 获取所有唯一的扁平化标签
+                                            as: 't',
+                                            in: {
+                                                tag: '$$t',
+                                                count: {
+                                                    $size: {
+                                                        $filter: {
+                                                            input: '$$flattenedTags',
+                                                            as: 'item',
+                                                            cond: { $eq: ['$$item', '$$t'] }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    as: 'tagItem',
+                                    cond: { $ne: ['$$tagItem.tag', ''] }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 排序 (如果按时间分组)
+            if (period === 'year') {
+                pipeline.push({ $sort: { '_id.year': 1 } });
+            } else if (period === 'month') {
+                pipeline.push({ $sort: { '_id.year': 1, '_id.month': 1 } });
+            } else if (period === 'day') {
+                pipeline.push({ $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } });
+            }
+
+
+            const statistics = await Diary.aggregate(pipeline);
+
+            // 格式化数据以供前端使用，特别是心情、天气、标签和地点分布
+            // 实际上，现在聚合管道已经尽可能地格式化了，这里做一些清理和排序
+            const formattedStatistics = statistics.map(item => {
+                let formattedItem = { ...item };
+
+                // 确保分布数据存在且是数组
+                formattedItem.moodDistribution = Array.isArray(formattedItem.moodDistribution) ? formattedItem.moodDistribution : [];
+                formattedItem.weatherDistribution = Array.isArray(formattedItem.weatherDistribution) ? formattedItem.weatherDistribution : [];
+                formattedItem.locationDistribution = Array.isArray(formattedItem.locationDistribution) ? formattedItem.locationDistribution : [];
+                formattedItem.tagDistribution = Array.isArray(formattedItem.tagDistribution) ? formattedItem.tagDistribution : [];
+
+                // 对标签分布进行降序排序 (频率高的在前)
+                formattedItem.tagDistribution.sort((a, b) => b.count - a.count);
+
+                return formattedItem;
+            });
+
+
+            // 获取所有可能的心情、天气、地点和标签列表，用于前端的下拉选择器
+            const allMoods = await Diary.distinct('mood', { userId: new mongoose.Types.ObjectId(String(userId)) });
+            const allWeathers = await Diary.distinct('weather', { userId: new mongoose.Types.ObjectId(String(userId)) });
+            const allLocations = await Diary.distinct('location', { userId: new mongoose.Types.ObjectId(String(userId)) });
+            const allTags = await Diary.distinct('tags', { userId: new mongoose.Types.ObjectId(String(userId)) });
+
+
+            res.render('diary/statistics', {
+                statistics: formattedStatistics,
+                startDate: startDate || '',
+                endDate: endDate || '',
+                mood: mood || '',
+                weather: weather || '',
+                location: location || '',
+                tags: tags || '', // 保持原始的 tags 字符串或数组
+                period: period || '',
+                publicOnly: publicOnly === 'on', // 传递布尔值
+                allMoods: allMoods.filter(m => m), // 过滤空值
+                allWeathers: allWeathers.filter(w => w), // 过滤空值
+                allLocations: allLocations.filter(l => l), // 过滤空值
+                allTags: allTags.filter(t => t), // 过滤空值
+                activeMenu: 'diaryStatistics', // 用于侧边栏高亮
+                path: path,
+                __dirname: __dirname,
+                basedir: path.join(__dirname, 'views')
+            });
+
+        } catch (err) {
+            console.error("Error fetching diary statistics:", err); // 更详细的错误日志
+            res.status(500).send('Server Error: ' + err.message); // 返回错误信息到前端，方便调试
+        }
+    });  
+    /*app.get('/diary/statistics', requireLogin, async (req, res) => {
+        try {
             const { startDate, endDate, mood} = req.query;
             const userId = req.session.userId;
 
@@ -207,5 +459,5 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
             console.error(err);
             res.status(500).send('Server Error');
         }
-    });
+    });*/
 }

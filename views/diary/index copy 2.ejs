@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日记列表</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa; /* 轻微的背景色，使界面更柔和 */
+        }
+        
+        /* Main application container using flexbox for sidebar and content */
+        .app-container {
+            display: flex;
+            flex-wrap: wrap; /* Allows columns (sidebar and main-content) to wrap on smaller screens */
+            padding-top: 20px;
+            padding-bottom: 20px;
+            min-height: 100vh;
+        }
+
+        /* Main content area styling */
+        .main-content-area {
+            flex-grow: 1; /* Takes up remaining space */
+            /* Default padding for all screen sizes */
+            padding-left: 15px; 
+            padding-right: 15px;
+        }
+        
+        /* Adjust padding for medium and larger screens */
+        @media (min-width: 768px) { /* Medium devices (tablets, 768px and up) */
+            .main-content-area {
+                padding-left: 30px; /* More space for tablets and desktops when sidebar is visible */
+            }
+        }
+
+        /* Action buttons group */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap; /* Allows buttons to wrap to next line on small screens */
+            gap: 10px; /* Spacing between buttons (Bootstrap 4 doesn't natively support 'gap' but most browsers do) */
+            margin-top: 20px; /* Space above action buttons */
+            margin-bottom: 20px; /* Space below action buttons */
+        }
+        /* Ensure specific button spacing if 'gap' isn't fully supported or preferred */
+        .action-buttons .btn:not(:last-child) {
+            margin-right: 10px; /* Fallback/additional spacing for buttons */
+        }
+
+        /* Responsive table styling for smaller screens */
+        @media (max-width: 767.98px) { /* Small devices (phones) */
+            .table-responsive {
+                width: 100%;
+                overflow-x: auto; /* Enables horizontal scrolling for very wide tables */
+                -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+                -ms-overflow-style: -ms-autohiding-scrollbar; /* For IE/Edge */
+            }
+            .table-responsive table {
+                width: 100%; /* Ensure the table itself takes full width of its container */
+                border-collapse: collapse; /* For cleaner borders on stacked tables */
+            }
+            /* Force table into 'stacking' mode on small screens */
+            .table-responsive thead,
+            .table-responsive tbody,
+            .table-responsive th,
+            .table-responsive td,
+            .table-responsive tr {
+                display: block;
+            }
+            /* Hide the original table headers */
+            .table-responsive thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            /* Add border between stacked rows */
+            .table-responsive tr {
+                border: 1px solid #ccc;
+                margin-bottom: 15px; /* Space between stacked rows */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Slight shadow for separation */
+                border-radius: .25rem; /* Match card-like appearance */
+            }
+            /* Style individual cells */
+            .table-responsive td {
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                padding-left: 50%; /* Space for the pseudo-element label */
+                text-align: right; /* Align actual data to the right */
+                font-size: 0.9em; /* Slightly smaller text for data */
+            }
+            /* Remove bottom border for the last cell in a row */
+            .table-responsive tr:last-child td {
+                border-bottom: none;
+            }
+            /* Add data labels using pseudo-elements */
+            .table-responsive td:before {
+                position: absolute;
+                top: 6px;
+                left: 6px;
+                width: 45%; /* Width for the label */
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left; /* Align labels to the left */
+                font-weight: bold;
+                color: #555; /* Slightly darker label color */
+            }
+            /* Specific labels for each column based on your table structure */
+            .table-responsive td:nth-of-type(1):before { content: "日期:"; }
+            .table-responsive td:nth-of-type(2):before { content: "标题:"; }
+            .table-responsive td:nth-of-type(3):before { content: "操作:"; }
+
+            /* Action buttons inside table on mobile */
+            .table-responsive td:last-of-type {
+                text-align: center; /* Center action buttons */
+                padding-left: 15px; /* Adjust padding for buttons */
+                padding-right: 15px;
+            }
+            .table-responsive td:last-of-type .btn {
+                margin: 5px; /* Space between action buttons */
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid app-container">
+    <%- include(path.join(basedir, 'menu', 'sidebar.ejs')) %>
+
+    <div class="col-12 col-sm-8 col-md-10 main-content-area">
+        <h1>日记列表</h1>
+
+        <div class="action-buttons">
+            <a href="/diary/add" class="btn btn-primary">添加日记</a>
+            <a href="/diary/statistics" class="btn btn-info">日记统计</a> 
+            <a href="/" class="btn btn-secondary">返回首页</a>
+        </div>
+
+        <hr>
+        <h2>日记记录</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>标题</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <% if (diaries && diaries.length > 0) { %>
+                    <% diaries.forEach(diary => { %>
+                        <tr>
+                            <td><%= new Date(diary.date).toLocaleDateString() %></td>
+                            <td><%= diary.title %></td>
+                            <td>
+                                <a href="/diary/view/<%= diary._id %>" class="btn btn-sm btn-info">查看</a>
+                                <a href="/diary/edit/<%= diary._id %>" class="btn btn-sm btn-warning">编辑</a>
+                                <form action="/diary/delete/<%= diary._id %>" method="POST" style="display: inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="3" class="text-center">暂无日记记录。</td>
+                    </tr>
+                <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/jquery-3.5.1.slim.min.js"></script>
+<script src="/popper.min.js"></script>
+<script src="/bootstrap.min.js"></script>
+</body>
+</html>
