@@ -71,7 +71,7 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             res.status(500).send('Server Error');
         }
     });
-    // 新增：资产统计页面
+    // 资产统计页面
     app.get('/assets/statistics', requireLogin, async (req, res) => {
         try {
             const userId = req.session.userId;

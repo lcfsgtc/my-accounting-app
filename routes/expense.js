@@ -97,7 +97,118 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
         }
     });
      // 支出统计路由
-    app.get('/expenses/statistics', requireLogin, async (req, res) => {
+    app.get('/expenses/statistics', requireLogin,async (req, res) => {
+        try {
+            const { startDate, endDate, category, subcategory, minAmount, maxAmount, period, year } = req.query;
+
+            let matchConditions = {};
+
+            // 日期筛选
+            if (startDate && endDate) {
+                matchConditions.date = {
+                    $gte: new Date(startDate),
+                    $lte: new Date(endDate)
+                };
+            } else if (startDate) {
+                matchConditions.date = { $gte: new Date(startDate) };
+            } else if (endDate) {
+                matchConditions.date = { $lte: new Date(endDate) };
+            }
+
+            // 类别筛选
+            if (category) {
+                matchConditions.category = category;
+            }
+            if (subcategory) {
+                matchConditions.subcategory = subcategory;
+            }
+
+            // 金额筛选
+            if (minAmount) {
+                matchConditions.amount = { ...matchConditions.amount, $gte: parseFloat(minAmount) };
+            }
+            if (maxAmount) {
+                matchConditions.amount = { ...matchConditions.amount, $lte: parseFloat(maxAmount) };
+            }
+
+            let groupStage;
+            let sortStage = { _id: 1 }; // 默认按_id升序
+
+            if (period === 'category') {
+                groupStage = {
+                    _id: '$category',
+                    totalAmount: { $sum: '$amount' }
+                };
+            } else if (period === 'subcategory') {
+                groupStage = {
+                    _id: '$subcategory',
+                    totalAmount: { $sum: '$amount' }
+                };
+            } else if (period === 'year') {
+                groupStage = {
+                    _id: { $year: '$date' },
+                    totalAmount: { $sum: '$amount' }
+                };
+            } else if (period === 'month') {
+                // 如果按月统计，并且指定了年份，则在匹配条件中加入年份
+                if (year) {
+                    // 将年份添加到日期筛选，或者单独筛选年份
+                    // 假设日期字段是Date类型
+                    matchConditions.date = {
+                        ...matchConditions.date, // 保留原有的日期范围（如果有的话）
+                        $gte: new Date(parseInt(year), 0, 1), // 某年的1月1日
+                        $lt: new Date(parseInt(year) + 1, 0, 1) // 下一年的1月1日
+                    };
+                }
+                groupStage = {
+                    _id: { $month: '$date' }, // 按月份聚合
+                    totalAmount: { $sum: '$amount' }
+                };
+                sortStage = { _id: 1 }; // 月份按数字升序
+            } else {
+                // 默认总计
+                groupStage = {
+                    _id: null,
+                    totalAmount: { $sum: '$amount' }
+                };
+            }
+
+            let aggregationPipeline = [];
+
+            if (Object.keys(matchConditions).length > 0) {
+                aggregationPipeline.push({ $match: matchConditions });
+            }
+
+            aggregationPipeline.push({ $group: groupStage });
+            aggregationPipeline.push({ $sort: sortStage });
+
+            const statistics = await Expense.aggregate(aggregationPipeline);
+
+            // 获取所有不重复的年份用于年度选择框
+            const distinctYearsResult = await Expense.aggregate([
+                { $group: { _id: { $year: '$date' } } },
+                { $sort: { _id: 1 } }
+            ]);
+            const distinctYears = distinctYearsResult.map(item => item._id);
+
+            // 获取所有不重复的大类和小类（用于筛选条件）
+            const distinctCategories = await Expense.distinct('category');
+            const distinctSubcategories = await Expense.distinct('subcategory');
+
+            res.render('expenses/statistics', {
+                statistics: period === '' ? [{ _id: '总计', totalAmount: statistics[0] ? statistics[0].totalAmount : 0 }] : statistics,
+                query: req.query,
+                distinctCategories,
+                distinctSubcategories,
+                distinctYears // 将年份传递给前端
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('服务器错误');
+        }
+    });     
+    /*app.get('/expenses/statistics', requireLogin, async (req, res) => {
         try {
             //const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
             const { startDate, endDate, category, subcategory, minAmount, maxAmount, period } = req.query; // 修改 categoryType 为 category, subcategory
@@ -106,12 +217,6 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
             let match = { userId: new mongoose.Types.ObjectId(String(userId) )};
 
             // 时间段过滤
-            /*if (startDate && endDate) {
-                match.date = {
-                    $gte: new Date(startDate),
-                    $lte: new Date(endDate)
-                };
-            }*/
             if (startDate) { // 修改为只判断 startDate 存在
                 match.date = { ...match.date, $gte: new Date(startDate) };
             }
@@ -129,12 +234,6 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
             }                  
 
             // 金额范围过滤
-            /*if (minAmount) {
-                match.amount = { $gte: parseFloat(minAmount) };
-            }
-            if (maxAmount) {
-                match.amount = { ...match.amount, $lte: parseFloat(maxAmount) };
-            }*/
             if (minAmount) {
                 match.amount = { ...match.amount, $gte: parseFloat(minAmount) };
             }
@@ -147,16 +246,6 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
             let project = { // 用于格式化输出 _id
                 totalAmount: 1
             };
-
-            /*if (categoryType && (categoryType === 'category' || categoryType === 'subcategory')) {
-                groupBy = { _id: `$${categoryType}` };
-            } else if (period === 'year') {
-                groupBy = { _id: { $year: '$date' } };
-            } else if (period === 'month') {
-                groupBy = { _id: { $year: '$date', $month: '$date' } };
-            } else {
-                groupBy = { _id: null }; //所有
-            }*/
             if (period === 'category') { // 按大类统计
                 groupBy = { _id: '$category' };
                 sortOrder = { _id: 1 };
@@ -178,11 +267,6 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
                 project._id = { $literal: '总计' }; // 将 _id 设置为 '总计' 字符串
                 sortOrder = { totalAmount: -1 }; // For '总计', sort by totalAmount descending
             }       
-
-           /* const pipeline = [
-                { $match: match },
-                { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } }
-            ];*/
             const pipeline = [
                 { $match: match },
                 { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } },
@@ -208,7 +292,7 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
             console.error(err);
             res.status(500).send('Server Error');
         }
-    });
+    });*/
     // 添加支出记录页面
     app.get('/expenses/add', requireLogin,(req, res) => {
       res.render('expenses/add_transaction');

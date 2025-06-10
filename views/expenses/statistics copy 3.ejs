@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>支出统计</title>
     <link rel="stylesheet" href="/bootstrap.min.css">
-    <link rel="stylesheet" href="/all.min.css">
-    <link rel="stylesheet" href="/cyrillic-ext.css">
+    <link rel="stylesheet" href="/all.min.css"> 
+    <link rel="stylesheet" href="/cyrillic-ext.css"> 
+    <!--link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" /-->
+    <!--link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"-->    
     <style>
         :root {
             --primary-color: #007bff;
@@ -68,10 +70,6 @@
         @media (min-width: 992px) { /* Large devices (desktops, 992px and up) */
             .app-container {
                 gap: 30px;
-            }
-            .main-content-area { /* Adjust for sidebar width */
-                flex-basis: calc(100% - 250px - 30px); /* 100% - sidebar width - gap */
-                max-width: calc(100% - 250px - 30px);
             }
         }
 
@@ -322,19 +320,7 @@
                                 <option value="month" <%= typeof query !== 'undefined' && query.period === "month" ? 'selected' : '' %>>按月</option>
                             </select>
                         </div>
-                        <div class="form-group col-md-3" id="yearSelectGroup" style="display: <%= typeof query !== 'undefined' && query.period === 'month' ? 'block' : 'none' %>;">
-                            <label for="year"><i class="fas fa-calendar"></i> 选择年度:</label>
-                            <select id="year" name="year" class="form-control">
-                                <% distinctYears.forEach(year => { %>
-                                    <option value="<%= year %>" <%= typeof query !== 'undefined' && query.year == year ? 'selected' : '' %>>
-                                        <%= year %> 年
-                                    </option>
-                                <% }); %>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-12 d-flex align-items-end filter-buttons">
+                        <div class="form-group col-md-3 d-flex align-items-end filter-buttons">
                             <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> 生成统计</button>
                             <a href="/expenses/statistics" class="btn btn-secondary"><i class="fas fa-redo"></i> 重置</a>
                         </div>
@@ -346,15 +332,6 @@
                 <div class="chart-container">
                     <h2>统计图表</h2>
                     <canvas id="expenseChart"></canvas>
-                </div>
-            <% } else if (query.period === 'month' && (!statistics || statistics.length === 0)) { %>
-                <div class="chart-container">
-                    <h2>统计图表</h2>
-                    <div class="no-data-message">
-                        <i class="fas fa-info-circle"></i>
-                        <p>当前年份没有月度支出数据。</p>
-                        <p>请调整筛选条件或选择其他年份。</p>
-                    </div>
                 </div>
             <% } %>
 
@@ -406,98 +383,67 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const statisticsData = <%- JSON.stringify(statistics) %>;
-            const query = <%- JSON.stringify(query) %>; // 传入整个 query 对象
-            const periodType = query.period || '';
-            const yearSelectGroup = document.getElementById('yearSelectGroup');
-            const periodSelect = document.getElementById('period');
-
-            // 根据统计方式显示/隐藏年份选择框
-            periodSelect.addEventListener('change', function() {
-                if (this.value === 'month') {
-                    yearSelectGroup.style.display = 'block';
-                } else {
-                    yearSelectGroup.style.display = 'none';
-                }
-            });
-
-            // 初始化时根据当前 query 显示/隐藏年份选择框
-            if (periodType === 'month') {
-                yearSelectGroup.style.display = 'block';
-            } else {
-                yearSelectGroup.style.display = 'none';
-            }
-
+            const periodType = "<%= typeof query !== 'undefined' ? query.period : '' %>";
 
             // Only render chart if there's data and a specific period type is selected (not '总计')
             if (statisticsData && statisticsData.length > 0 && periodType !== '') {
-                let labels = statisticsData.map(item => item._id);
+                const labels = statisticsData.map(item => item._id);
                 const data = statisticsData.map(item => item.totalAmount);
+                const backgroundColors = [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)',
+                    'rgba(199, 199, 199, 0.7)',
+                    'rgba(83, 102, 255, 0.7)',
+                    'rgba(201, 203, 207, 0.7)',
+                    'rgba(255, 99, 132, 0.7)', // Repeat for more colors
+                    'rgba(54, 162, 235, 0.7)'
+                ];
+                const borderColors = [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)',
+                    'rgba(199, 199, 199, 1)',
+                    'rgba(83, 102, 255, 1)',
+                    'rgba(201, 203, 207, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)'
+                ];
+
+                const ctx = document.getElementById('expenseChart').getContext('2d');
                 let chartType = 'bar'; // Default to bar chart
-                let titleText = '支出统计';
-                let xAxesTitle = '类别';
-                let yAxesTitle = '金额';
+                let titleText = '支出按类别统计';
 
                 if (periodType === 'category' || periodType === 'subcategory') {
                     chartType = 'pie'; // Use pie chart for category/subcategory
                     titleText = '支出按' + (periodType === 'category' ? '大类' : '小类') + '统计';
                 } else if (periodType === 'year') {
                     titleText = '支出按年份统计';
-                    xAxesTitle = '年份';
                 } else if (periodType === 'month') {
-                    chartType = 'line'; // Use line chart for month
-                    titleText = '支出按月份统计 (' + (query.year || '所有') + '年)';
-                    xAxesTitle = '月份';
-                    yAxesTitle = '金额';
-                    // 确保月份标签是正确的顺序
-                    const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
-                    // 创建一个包含所有12个月份的对象，初始金额为0
-                    const monthlyData = {};
-                    for (let i = 1; i <= 12; i++) {
-                        monthlyData[String(i)] = 0;
-                    }
-                    // 将后端返回的数据填充到 monthlyData
-                    statisticsData.forEach(item => {
-                        monthlyData[item._id] = item.totalAmount;
-                    });
-                    // 生成排序后的标签和数据
-                    labels = Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b)).map(monthNum => monthNames[parseInt(monthNum) - 1]);
-                    data.length = 0; // 清空旧数据
-                    Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b)).forEach(monthNum => {
-                        data.push(monthlyData[monthNum]);
-                    });
+                    titleText = '支出按月份统计';
                 }
 
-                const backgroundColors = [
-                    'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
-                    'rgba(199, 199, 199, 0.7)', 'rgba(83, 102, 255, 0.7)', 'rgba(201, 203, 207, 0.7)',
-                    'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)'
-                ];
-                const borderColors = [
-                    'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
-                    'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)', 'rgba(201, 203, 207, 1)',
-                    'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'
-                ];
-
-                const ctx = document.getElementById('expenseChart').getContext('2d');
                 new Chart(ctx, {
-                    type: chartType,
+                    type: chartType, // bar or pie
                     data: {
                         labels: labels,
                         datasets: [{
                             label: '总金额',
                             data: data,
-                            backgroundColor: chartType === 'line' ? 'rgba(0, 123, 255, 0.2)' : backgroundColors.slice(0, labels.length), // Line chart uses fill
-                            borderColor: chartType === 'line' ? 'rgba(0, 123, 255, 1)' : borderColors.slice(0, labels.length),
-                            borderWidth: 1,
-                            fill: chartType === 'line' ? true : false, // Fill area under line for line chart
-                            tension: chartType === 'line' ? 0.4 : 0 // Smooth curve for line chart
+                            backgroundColor: backgroundColors.slice(0, labels.length), // Use enough colors
+                            borderColor: borderColors.slice(0, labels.length),
+                            borderWidth: 1
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: false, // Allow chart to fill container
                         plugins: {
                             title: {
                                 display: true,
@@ -513,33 +459,31 @@
                                         if (label) {
                                             label += ': ';
                                         }
-                                        if (chartType === 'line' || chartType === 'bar') {
+                                        if (context.parsed.y !== undefined) { // For bar chart
                                             label += context.parsed.y.toFixed(2);
-                                        } else if (chartType === 'pie') {
-                                            const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
-                                            const percentage = (context.parsed / total * 100).toFixed(1);
-                                            label += context.parsed.toFixed(2) + ' (' + percentage + '%)';
+                                        } else if (context.parsed !== undefined) { // For pie chart
+                                            label += context.parsed.toFixed(2) + ' (' + (context.dataset.data[context.dataIndex] / data.reduce((a, b) => a + b, 0) * 100).toFixed(1) + '%)';
                                         }
                                         return label;
                                     }
                                 }
                             }
                         },
-                        scales: chartType === 'pie' ? {} : { // No scales for pie chart
+                        scales: chartType === 'bar' ? { // Only for bar chart
                             y: {
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: yAxesTitle
+                                    text: '金额'
                                 }
                             },
                             x: {
                                 title: {
                                     display: true,
-                                    text: xAxesTitle
+                                    text: '类别'
                                 }
                             }
-                        }
+                        } : {} // No scales for pie chart
                     }
                 });
             }
