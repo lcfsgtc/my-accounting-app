@@ -22,12 +22,17 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
                 query.subcategory = subcategory;
             }
             const queryString = querystring.encode(req.query); //生成查询字符串
+             // 获取所有不重复的类别和子类别，用于筛选下拉菜单
+            const distinctCategories = await Expense.distinct('category', { userId: userId });
+            const distinctSubcategories = await Expense.distinct('subcategory', { userId: userId });
             const expenses = await Expense.find(query).sort({ date: 'desc' });
             res.render('expenses/index', {
                 expenses: expenses,
                 queryString: queryString,
+                distinctCategories: distinctCategories.sort(),
+                distinctSubcategories: distinctSubcategories.sort() ,             
                 path: path,
-                __dirname: __dirname,
+                //__dirname: __dirname,
                 basedir: path.join(__basedir, 'views')
             });
         } catch (err) {
@@ -94,29 +99,56 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
      // 支出统计路由
     app.get('/expenses/statistics', requireLogin, async (req, res) => {
         try {
-            const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
+            //const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
+            const { startDate, endDate, category, subcategory, minAmount, maxAmount, period } = req.query; // 修改 categoryType 为 category, subcategory
             const userId = req.session.userId;
 
             let match = { userId: new mongoose.Types.ObjectId(String(userId) )};
 
             // 时间段过滤
-            if (startDate && endDate) {
+            /*if (startDate && endDate) {
                 match.date = {
                     $gte: new Date(startDate),
                     $lte: new Date(endDate)
                 };
+            }*/
+            if (startDate) { // 修改为只判断 startDate 存在
+                match.date = { ...match.date, $gte: new Date(startDate) };
             }
+            if (endDate) { // 修改为只判断 endDate 存在
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // 设置到当天的最后一刻
+                match.date = { ...match.date, $lte: end };
+            }    
+            // 类别和子类别过滤
+            if (category && category !== '') {
+                match.category = category;
+            }
+            if (subcategory && subcategory !== '') {
+                match.subcategory = subcategory;
+            }                  
 
             // 金额范围过滤
-            if (minAmount) {
+            /*if (minAmount) {
                 match.amount = { $gte: parseFloat(minAmount) };
+            }
+            if (maxAmount) {
+                match.amount = { ...match.amount, $lte: parseFloat(maxAmount) };
+            }*/
+            if (minAmount) {
+                match.amount = { ...match.amount, $gte: parseFloat(minAmount) };
             }
             if (maxAmount) {
                 match.amount = { ...match.amount, $lte: parseFloat(maxAmount) };
             }
 
             let groupBy = {};
-            if (categoryType && (categoryType === 'category' || categoryType === 'subcategory')) {
+            let sortOrder = {}; // 用于排序统计结果
+            let project = { // 用于格式化输出 _id
+                totalAmount: 1
+            };
+
+            /*if (categoryType && (categoryType === 'category' || categoryType === 'subcategory')) {
                 groupBy = { _id: `$${categoryType}` };
             } else if (period === 'year') {
                 groupBy = { _id: { $year: '$date' } };
@@ -124,16 +156,54 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
                 groupBy = { _id: { $year: '$date', $month: '$date' } };
             } else {
                 groupBy = { _id: null }; //所有
-            }
+            }*/
+            if (period === 'category') { // 按大类统计
+                groupBy = { _id: '$category' };
+                sortOrder = { _id: 1 };
+                project._id = '$_id';
+            } else if (period === 'subcategory') { // 按小类统计
+                groupBy = { _id: '$subcategory' };
+                sortOrder = { _id: 1 };
+                project._id = '$_id';
+            } else if (period === 'year') { // 按年统计
+                groupBy = { _id: { $year: '$date' } };
+                sortOrder = { _id: 1 };
+                project._id = { $toString: '$_id' }; // 将年份转换为字符串
+            } else if (period === 'month') { // 按月统计
+                groupBy = { _id: { $dateToString: { format: "%Y-%m", date: "$date" } } }; // 格式化为 "YYYY-MM"
+                sortOrder = { _id: 1 };
+                project._id = '$_id';
+            } else { // 默认总计
+                groupBy = { _id: null };
+                project._id = { $literal: '总计' }; // 将 _id 设置为 '总计' 字符串
+                sortOrder = { totalAmount: -1 }; // For '总计', sort by totalAmount descending
+            }       
 
-            const pipeline = [
+           /* const pipeline = [
                 { $match: match },
                 { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } }
+            ];*/
+            const pipeline = [
+                { $match: match },
+                { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } },
+                { $project: project }, // 应用 project 阶段
+                { $sort: sortOrder } // 添加排序
             ];
 
             const statistics = await Expense.aggregate(pipeline);
-
-            res.render('expenses/statistics', { statistics: statistics, startDate, endDate, categoryType, minAmount, maxAmount, period });
+           // 获取所有不重复的类别和子类别，用于统计页面的下拉列表
+            const distinctCategories = await Expense.distinct('category', { userId: userId });
+            const distinctSubcategories = await Expense.distinct('subcategory', { userId: userId });
+            //res.render('expenses/statistics', { statistics: statistics, startDate, endDate, categoryType, minAmount, maxAmount, period });
+              res.render('expenses/statistics', {
+                statistics: statistics,
+                query: req.query, // 传递完整的查询对象，方便前端填充
+                distinctCategories: distinctCategories.sort(),
+                distinctSubcategories: distinctSubcategories.sort(),
+                path: path,
+                //__dirname: __dirname,
+                basedir: path.join(__basedir, 'views')                
+            });      
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');

@@ -83,16 +83,33 @@
                 </div>
                 <div class="form-group col-md-3">
                     <label for="category">大类:</label>
-                    <input type="text" class="form-control" id="category" name="category" value="<%= typeof category !== 'undefined' ? category : '' %>">
+                    <select class="form-control" id="category" name="category"></select>
+                        <option value="">所有大类</option>
+                        <% distinctCategories.forEach(cat => { %>
+                            <option value="<%= cat %>" <%= typeof query !== 'undefined' && query.category === cat ? 'selected' : '' %>>
+                                <%= cat %>
+                            </option>
+                        <% }); %>
+                    </select>                    
+                    <!--input type="text" class="form-control" id="category" name="category" value="<%= typeof category !== 'undefined' ? category : '' %>"-->
                 </div>
                 <div class="form-group col-md-3">
                     <label for="subcategory">小类:</label>
-                    <input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= typeof subcategory !== 'undefined' ? subcategory : '' %>">
+                    <!--input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= typeof subcategory !== 'undefined' ? subcategory : '' %>"-->
+                    <select class="form-control" id="subcategory" name="subcategory">
+                        <option value="">所有小类</option>
+                        <% distinctSubcategories.forEach(subcat => { %>
+                            <option value="<%= subcat %>" <%= typeof query !== 'undefined' && query.subcategory === subcat ? 'selected' : '' %>>
+                                <%= subcat %>
+                            </option>
+                        <% }); %>
+                    </select>                    
                 </div>
             </div>
             <div class="filter-buttons">
                 <button type="submit" class="btn btn-primary">筛选</button>
-                <a href="/expenses/export<%=queryString%>" class="btn btn-secondary">导出</a>
+                <!--a href="/expenses/export<%=queryString%>" class="btn btn-secondary">导出</a-->
+                <a href="/expenses/export<%= queryString ? '?' + queryString : '' %>" class="btn btn-secondary">导出</a>
             </div>
         </form>
         <div class="action-buttons">
