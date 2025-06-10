@@ -86,6 +86,98 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
             }
         });
         // 收入统计路由
+        app.get('/incomes/statistics', requireLogin, async (req, res) => {
+            try {
+                const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
+                const userId = req.session.userId;
+
+                let match = { userId: new mongoose.Types.ObjectId(String(userId)) };
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    end.setHours(23, 59, 59, 999); // 确保包含结束日期的全天
+
+                    match.date = {
+                        $gte: start,
+                        $lte: end
+                    };
+                }
+
+                if (minAmount) {
+                    match.amount = { ...match.amount, $gte: parseFloat(minAmount) };
+                }
+                if (maxAmount) {
+                    match.amount = { ...match.amount, $lte: parseFloat(maxAmount) };
+                }
+
+                let groupBy = { _id: null }; // 默认总计
+
+                // 动态构建 groupBy 字段
+                if (categoryType === 'category') {
+                    if (period === 'year') {
+                        groupBy._id = { category: '$category', year: { $year: '$date' } };
+                    } else if (period === 'month') {
+                        groupBy._id = { category: '$category', year: { $year: '$date' }, month: { $month: '$date' } };
+                    } else {
+                        groupBy._id = '$category';
+                    }
+                } else if (categoryType === 'subcategory') {
+                    if (period === 'year') {
+                        groupBy._id = { subcategory: '$subcategory', year: { $year: '$date' } };
+                    } else if (period === 'month') {
+                        groupBy._id = { subcategory: '$subcategory', year: { $year: '$date' }, month: { $month: '$date' } };
+                    } else {
+                        groupBy._id = '$subcategory';
+                    }
+                } else if (categoryType === 'categoryAndSubcategory') {
+                    // 新增：按大类和小类统计
+                    if (period === 'year') {
+                        groupBy._id = { category: '$category', subcategory: '$subcategory', year: { $year: '$date' } };
+                    } else if (period === 'month') {
+                        groupBy._id = { category: '$category', subcategory: '$subcategory', year: { $year: '$date' }, month: { $month: '$date' } };
+                    } else {
+                        groupBy._id = { category: '$category', subcategory: '$subcategory' };
+                    }
+                } else if (period === 'year') {
+                    groupBy._id = { $year: '$date' };
+                } else if (period === 'month') {
+                    groupBy._id = { year: { $year: '$date' }, month: { $month: '$date' } };
+                }
+                // 如果 categoryType 和 period 都为空，则 groupBy._id 保持为 null (总计)
+
+                const pipeline = [
+                    { $match: match },
+                    { $group: { _id: groupBy._id, totalAmount: { $sum: '$amount' } } },
+                    { $sort: {
+                        // 优先按类别排序，然后按小类，再按年份和月份
+                        '_id.category': 1,
+                        '_id.subcategory': 1,
+                        '_id.year': 1,
+                        '_id.month': 1,
+                        '_id': 1 // 对于简单 _id (如只按类别或只按年)，按 _id 本身排序
+                    }}
+                ];
+
+                const statistics = await Income.aggregate(pipeline);
+
+                res.render('incomes/statistics', {
+                    statistics: statistics,
+                    startDate: startDate || '',
+                    endDate: endDate || '',
+                    categoryType: categoryType || '',
+                    minAmount: minAmount || '',
+                    maxAmount: maxAmount || '',
+                    period: period || '',
+                    activeMenu: 'incomesStatistics'
+                });
+            } catch (err) {
+                console.error(err);
+                res.status(500).send('Server Error');
+            }
+        });
+
+
     /*app.get('/incomes/statistics', requireLogin, async (req, res) => {
         try {
             const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
@@ -202,7 +294,7 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
             res.status(500).send('Server Error');
         }
     }); */
-    app.get('/incomes/statistics', requireLogin, async (req, res) => {
+    /*app.get('/incomes/statistics', requireLogin, async (req, res) => {
         try {
             const { startDate, endDate, categoryType, minAmount, maxAmount, period } = req.query;
             const userId = req.session.userId;
@@ -287,7 +379,7 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
             console.error(err);
             res.status(500).send('Server Error');
         }
-    });   
+    }); */  
     // 添加收入记录页面
     app.get('/incomes/add', requireLogin, (req, res) => {
         res.render('incomes/add');

@@ -153,7 +153,6 @@
                         <option value="" <%= categoryType === "" ? 'selected' : '' %>>所有类别</option>
                         <option value="category" <%= categoryType === "category" ? 'selected' : '' %>>大类</option>
                         <option value="subcategory" <%= categoryType === "subcategory" ? 'selected' : '' %>>小类</option>
-                        <option value="categoryAndSubcategory" <%= categoryType === "categoryAndSubcategory" ? 'selected' : '' %>>大类和小类</option>
                     </select>
                 </div>
                 <div class="form-group col-12 col-sm-6 col-md-2">
@@ -194,46 +193,37 @@
                         <% statistics.forEach(item => { %>
                             <tr>
                                 <td>
-                                    <% // 精细化处理 item._id 的显示 %>
+                                    <% // 确保 item._id 存在且是对象 %>
                                     <% if (typeof item._id === 'object' && item._id !== null) { %>
-                                        <% let displayString = ''; %>
-                                        <%
-                                            if (item._id.category && item._id.subcategory) {
-                                                displayString += item._id.category + ' - ' + item._id.subcategory;
-                                            } else if (item._id.category) {
-                                                displayString += item._id.category;
-                                            } else if (item._id.subcategory) { // 单独的小类统计
-                                                displayString += item._id.subcategory;
-                                            }
-
-                                            // 添加时间信息
-                                            if (item._id.year && item._id.month) {
-                                                if (displayString !== '') displayString += ' - ';
-                                                displayString += item._id.year + '年' + String(item._id.month).padStart(2, '0') + '月';
-                                            } else if (item._id.year) {
-                                                if (displayString !== '') displayString += ' - ';
-                                                displayString += item._id.year + '年';
-                                            } else if (item._id.month) {
-                                                // 这种情况通常只出现在 'period' 为 'month' 且 'categoryType' 为空时
-                                                displayString += String(item._id.month).padStart(2, '0') + '月';
-                                            }
-
-                                            // 如果以上都没有匹配到（例如，纯粹的总计，_id为null或空对象）
-                                            if (displayString === '' && item._id === null) {
-                                                displayString = '总计';
-                                            } else if (displayString === '') {
-                                                // 兜底，防止意外情况，但通常不应该发生
-                                                displayString = '[未知统计项]';
-                                            }
-                                        %>
-                                        <%= displayString %>
+                                        <% // 复合统计：类别 + 年 + 月 %>
+                                        <% if (item._id.category && item._id.year && item._id.month) { %>
+                                            <%= item._id.category %> - <%= item._id.year %>年<%= String(item._id.month).padStart(2, '0') %>月
+                                        <% // 复合统计：类别 + 年 %>
+                                        <% } else if (item._id.category && item._id.year) { %>
+                                            <%= item._id.category %> - <%= item._id.year %>年
+                                        <% // 复合统计：类别 + 月 (如果存在这种情况) %>
+                                        <% } else if (item._id.category && item._id.month) { %>
+                                            <%= item._id.category %> - <%= String(item._id.month).padStart(2, '0') %>月
+                                        <% // 复合统计：年 + 月 (仅时间统计) %>
+                                        <% } else if (item._id.year && item._id.month) { %>
+                                            <%= item._id.year %>年<%= String(item._id.month).padStart(2, '0') %>月
+                                        <% // 单一统计：只按类别 %>
+                                        <% } else if (item._id.category) { %>
+                                            <%= item._id.category %>
+                                        <% // 单一统计：只按年 %>
+                                        <% } else if (item._id.year) { %>
+                                            <%= item._id.year %>年
+                                        <% // 单一统计：只按月 %>
+                                        <% } else if (item._id.month) { %>
+                                            <%= String(item._id.month).padStart(2, '0') %>月
+                                        <% } else { %>
+                                            总计 <% } %>
                                     <% } else { %>
-                                        <% // 处理简单 _id (例如：总计为 null，或单个类别名称字符串) %>
+                                        <% // 处理简单 _id (例如：总计为 null，或单个类别名称) %>
                                         <% if (item._id === null) { %>
                                             总计
                                         <% } else { %>
-                                            <%= item._id %>
-                                        <% } %>
+                                            <%= item._id %> <% } %>
                                     <% } %>
                                 </td>
                                 <td>¥ <%= item.totalAmount ? item.totalAmount.toFixed(2) : '0.00' %></td>

@@ -318,7 +318,6 @@
                                 <option value="" <%= typeof query !== 'undefined' && query.period === "" ? 'selected' : '' %>>总计</option>
                                 <option value="category" <%= typeof query !== 'undefined' && query.period === "category" ? 'selected' : '' %>>按大类</option>
                                 <option value="subcategory" <%= typeof query !== 'undefined' && query.period === "subcategory" ? 'selected' : '' %>>按小类</option>
-                                <option value="categoryAndSubcategory" <%= typeof query !== 'undefined' && query.period === "categoryAndSubcategory" ? 'selected' : '' %>>按大类和小类</option>
                                 <option value="year" <%= typeof query !== 'undefined' && query.period === "year" ? 'selected' : '' %>>按年</option>
                                 <option value="month" <%= typeof query !== 'undefined' && query.period === "month" ? 'selected' : '' %>>按月</option>
                             </select>
@@ -374,11 +373,7 @@
                             <% if (statistics && statistics.length > 0) { %>
                                 <% statistics.forEach(item => { %>
                                     <tr>
-                                        <% if (query.period === 'categoryAndSubcategory') { %>
-                                            <td data-label="统计类别"><%= item._id.category %> - <%= item._id.subcategory %></td>
-                                        <% } else { %>
-                                            <td data-label="统计类别"><%= item._id %></td>
-                                        <% } %>
+                                        <td data-label="统计类别"><%= item._id %></td>
                                         <td data-label="总金额"><%= item.totalAmount.toFixed(2) %></td>
                                     </tr>
                                     <% totalOverallAmount += item.totalAmount; %>
@@ -410,9 +405,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Using `|| {}` to ensure the object exists even if it's undefined from the server
-            const statisticsData = <%- JSON.stringify(statistics || []) %>;
-            const query = <%- JSON.stringify(query || {}) %>; // 传入整个 query 对象
+            const statisticsData = <%- JSON.stringify(statistics) %>;
+            const query = <%- JSON.stringify(query) %>; // 传入整个 query 对象
             const periodType = query.period || '';
             const yearSelectGroup = document.getElementById('yearSelectGroup');
             const periodSelect = document.getElementById('period');
@@ -436,29 +430,16 @@
 
             // Only render chart if there's data and a specific period type is selected (not '总计')
             if (statisticsData && statisticsData.length > 0 && periodType !== '') {
-                let labels = statisticsData.map(item => {
-                    if (periodType === 'categoryAndSubcategory') {
-                        // Ensure _id exists and has category/subcategory properties
-                        return `${item._id && item._id.category ? item._id.category : '未知大类'} - ${item._id && item._id.subcategory ? item._id.subcategory : '未知小类'}`;
-                    }
-                    return item._id;
-                });
+                let labels = statisticsData.map(item => item._id);
                 const data = statisticsData.map(item => item.totalAmount);
                 let chartType = 'bar'; // Default to bar chart
                 let titleText = '支出统计';
                 let xAxesTitle = '类别';
                 let yAxesTitle = '金额';
 
-                if (periodType === 'category') {
-                    chartType = 'pie'; // Use pie chart for category
-                    titleText = '支出按大类统计';
-                } else if (periodType === 'subcategory') {
-                    chartType = 'pie'; // Use pie chart for subcategory
-                    titleText = '支出按小类统计';
-                } else if (periodType === 'categoryAndSubcategory') {
-                    chartType = 'bar'; // Bar chart is usually better for combined categories
-                    titleText = '支出按大类和小类统计';
-                    xAxesTitle = '大类 - 小类';
+                if (periodType === 'category' || periodType === 'subcategory') {
+                    chartType = 'pie'; // Use pie chart for category/subcategory
+                    titleText = '支出按' + (periodType === 'category' ? '大类' : '小类') + '统计';
                 } else if (periodType === 'year') {
                     titleText = '支出按年份统计';
                     xAxesTitle = '年份';
