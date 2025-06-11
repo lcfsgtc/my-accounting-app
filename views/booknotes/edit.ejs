@@ -1,42 +1,66 @@
-<div class="container mt-4">
-    <h1>编辑读书笔记</h1>
+<div class="container mt-4 mb-4">
+    <h1 class="page-title text-center mb-5">编辑读书笔记</h1>
+
     <% if (error_msg) { %>
-        <div class="alert alert-danger"><%= error_msg %></div>
+        <div class="alert alert-danger" role="alert"><%= error_msg %></div>
     <% } %>
-    <form action="/booknote/edit/<%= bookNote._id %>?_method=PUT" method="POST"> 
-        <div class="mb-3">
-            <label for="title" class="form-label">书名</label>
-            <input type="text" class="form-control" id="title" name="title" value="<%= bookNote.title %>" required>
+
+    <div class="card shadow-lg mb-5"> <%# 增加阴影深度 %>
+        <div class="card-header bg-primary text-white text-center py-3"> <%# 头部使用主题色，居中文字 %>
+            <h4 class="mb-0"><i class="fas fa-pencil-alt mr-2"></i>编辑笔记信息</h4> <%# 更换图标以区分新增 %>
         </div>
-        <div class="mb-3">
-            <label for="author" class="form-label">作者</label>
-            <input type="text" class="form-control" id="author" name="author" value="<%= bookNote.author %>">
+        <div class="card-body p-4"> <%# 增加内边距 %>
+            <form action="/booknote/edit/<%= bookNote._id %>?_method=PUT" method="POST">
+                <div class="form-row">
+                    <div class="form-group col-12 col-md-6 mb-3"> <%# 手机全宽，平板及以上各占一半，增加底部间距 %>
+                        <label for="title" class="form-label">书名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" value="<%= bookNote.title %>" required placeholder="请输入书名">
+                    </div>
+                    <div class="form-group col-12 col-md-6 mb-3">
+                        <label for="author" class="form-label">作者</label>
+                        <input type="text" class="form-control" id="author" name="author" value="<%= bookNote.author %>" placeholder="请输入作者">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-12 col-md-6 mb-3">
+                        <label for="publishYear" class="form-label">出版年份</label>
+                        <input type="number" class="form-control" id="publishYear" name="publishYear" value="<%= bookNote.publishYear || '' %>" min="1000" max="<%= new Date().getFullYear() %>" placeholder="例如: 2023">
+                    </div>
+                    <div class="form-group col-12 col-md-6 mb-3">
+                        <label for="category" class="form-label">类别</label>
+                        <input type="text" class="form-control" id="category" name="category" value="<%= bookNote.category %>" placeholder="例如: 科幻, 历史, 技术">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-12 col-md-6 mb-3">
+                        <label for="tags" class="form-label">标签 (用逗号分隔)</label>
+                        <input type="text" class="form-control" id="tags" name="tags" value="<%= bookNote.tags.join(', ') %>" placeholder="例如: 小说, 编程, 人工智能">
+                    </div>
+                    <div class="form-group col-12 col-md-6 mb-3">
+                        <label for="readDate" class="form-label">阅读日期</label>
+                        <input type="date" class="form-control" id="readDate" name="readDate" value="<%= bookNote.readDate ? new Date(bookNote.readDate).toISOString().substring(0, 10) : '' %>">
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="rating" class="form-label">评分 (1-5星)</label>
+                    <input type="number" class="form-control" id="rating" name="rating" value="<%= bookNote.rating || '' %>" min="1" max="5" placeholder="请输入1-5的整数">
+                </div>
+                <div class="form-group mb-4"> <%# 增加底部间距 %>
+                    <label for="notes" class="form-label">笔记内容</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="10" placeholder="在此处填写您的读书笔记..."><%= bookNote.notes %></textarea>
+                </div>
+
+                <hr class="mb-4"> <%# 按钮前增加分割线 %>
+
+                <div class="d-flex justify-content-end flex-wrap">
+                    <button type="submit" class="btn btn-primary btn-lg mb-2 mr-2 w-100 w-md-auto">
+                        <i class="fas fa-save mr-2"></i>更新笔记
+                    </button>
+                    <a href="/booknote" class="btn btn-secondary btn-lg mb-2 w-100 w-md-auto">
+                        <i class="fas fa-times-circle mr-2"></i>取消
+                    </a>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            <label for="publishYear" class="form-label">出版年份</label>
-            <input type="number" class="form-control" id="publishYear" name="publishYear" value="<%= bookNote.publishYear || '' %>" min="1000" max="<%= new Date().getFullYear() %>">
-        </div>
-        <div class="mb-3">
-            <label for="category" class="form-label">类别</label>
-            <input type="text" class="form-control" id="category" name="category" value="<%= bookNote.category %>">
-        </div>
-        <div class="mb-3">
-            <label for="tags" class="form-label">标签 (用逗号分隔)</label>
-            <input type="text" class="form-control" id="tags" name="tags" value="<%= bookNote.tags.join(', ') %>">
-        </div>
-        <div class="mb-3">
-            <label for="readDate" class="form-label">阅读日期</label>
-            <input type="date" class="form-control" id="readDate" name="readDate" value="<%= bookNote.readDate ? new Date(bookNote.readDate).toISOString().substring(0, 10) : '' %>">
-        </div>
-        <div class="mb-3">
-            <label for="rating" class="form-label">评分 (1-5星)</label>
-            <input type="number" class="form-control" id="rating" name="rating" value="<%= bookNote.rating || '' %>" min="1" max="5">
-        </div>
-        <div class="mb-3">
-            <label for="notes" class="form-label">笔记内容</label>
-            <textarea class="form-control" id="notes" name="notes" rows="10"><%= bookNote.notes %></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">更新笔记</button>
-        <a href="/booknote" class="btn btn-secondary mt-3">取消</a> <%# <-- 修改点：/booknote %>
-    </form>
+    </div>
 </div>

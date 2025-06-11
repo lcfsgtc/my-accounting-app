@@ -5,74 +5,381 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
     <link rel="stylesheet" href="/bootstrap.min.css">
-    <link rel="stylesheet" href="/all.min.css"> <style>
+    <link rel="stylesheet" href="/all.min.css">
+    
+    <style>
+        /* 全局样式 */
         body {
-            display: flex;
+            font-family: 'Segoe UI', Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; /* 更现代的字体堆栈 */
+            background-color: #f8f9fa; /* 更清爽的背景色 */
             min-height: 100vh;
-            overflow-x: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* 防止水平滚动条 */
         }
-        .content {
+
+        /* 标题和分割线 */
+        h1, h2, h3, h4, h5, h6 {
+            color: #343a40;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+        .page-title {
+            font-size: 2.2rem;
+            color: #212529;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem !important; /* 增加底部间距 */
+        }
+        hr {
+            border-top: 1px solid rgba(0, 0, 0, .08);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* 侧边栏容器样式 - 桌面端固定 */
+        .sidebar-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px; /* 默认宽度 */
+            height: 100vh;
+            background-color: #2c3e50; /* 深色沉稳背景 */
+            color: #ffffff;
+            padding-top: 2rem; /* 增加顶部间距 */
+            z-index: 1030;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 增加阴影深度 */
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+            transform: translateX(0); /* 桌面端默认显示 */
+        }
+
+        /* 侧边栏标题 */
+        .sidebar-heading {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem; /* 增加间距 */
+            letter-spacing: 0.05em;
+        }
+
+        /* 侧边栏列表项 */
+        .sidebar-list-group-item {
+            color: rgba(255, 255, 255, 0.85); /* 调整文字颜色 */
+            padding: 0.85rem 1.5rem; /* 增加内边距 */
+            border: none;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            background-color: transparent;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            text-decoration: none; /* 移除下划线 */
+        }
+        .sidebar-list-group-item:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-list-group-item.active {
+            color: #ffffff;
+            background-color: #3498db; /* 激活项使用鲜明的主题色 */
+            font-weight: 600; /* 激活项加粗 */
+            border-left: 5px solid #ffffff; /* 激活项左侧强调线 */
+            padding-left: calc(1.5rem - 5px); /* 调整内边距以适应强调线 */
+        }
+        .sidebar-list-group-item i {
+            margin-right: 0.8rem;
+            width: 1.2rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+        .sidebar-list-group-item.active i {
+            opacity: 1;
+        }
+
+
+        /* 主内容区域样式 */
+        .main-content-wrapper {
             flex-grow: 1;
-            padding: 1.5rem;
+            padding: 2.5rem; /* 增加内容区域内边距 */
             background-color: #ffffff;
-            border-radius: .375rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            margin: 1.5rem;
+            border-radius: 0.75rem; /* 增加圆角 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 增加阴影深度 */
+            margin: 1.5rem; /* 外部间距 */
+            margin-left: 265px; /* 侧边栏宽度 + 间距 */
+            transition: margin-left 0.3s ease-in-out;
         }
 
-        /* 表单和按钮样式 (可以根据你的现有样式调整) */
-        .form-group label { font-weight: 600; margin-bottom: .5rem; color: #495057; }
-        .form-control { border-radius: .25rem; border: 1px solid #ced4da; padding: .6rem .75rem; font-size: .9rem; }
-        .form-control:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); }
-        .btn { border-radius: .25rem; font-size: .9rem; padding: .6rem 1rem; }
-        .btn-primary { background-color: #007bff; border-color: #007bff; }
-        .btn-primary:hover { background-color: #0056b3; border-color: #004085; }
-        .btn-secondary { background-color: #6c757d; border-color: #6c757d; }
-        .btn-secondary:hover { background-color: #5a6268; border-color: #545b62; }
-        .btn-danger { background-color: #dc3545; border-color: #dc3545; }
-        .btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
-        .btn-warning { background-color: #ffc107; border-color: #ffc107; color: #212529;}
-        .btn-warning:hover { background-color: #e0a800; border-color: #d39e00; }
-        .btn-success { background-color: #28a745; border-color: #28a745; }
-        .btn-success:hover { background-color: #218838; border-color: #1e7e34; }
+        /* 汉堡菜单按钮 (仅移动端可见) */
+        .navbar-toggler-custom {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1040;
+            display: none; /* 桌面端隐藏 */
+            background-color: #3498db; /* 按钮背景色 */
+            border-color: #3498db;
+            color: #fff;
+            padding: 0.6rem 0.8rem;
+            font-size: 1.2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-toggler-custom:hover, .navbar-toggler-custom:focus {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            color: #fff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
 
 
-        /* 表格样式 (可以根据你的现有样式调整) */
-        .table { margin-bottom: 1rem; border-collapse: separate; border-spacing: 0; border-radius: .375rem; overflow: hidden; }
-        .table thead th { background-color: #343a40; color: #fff; border-bottom: 2px solid #dee2e6; padding: .75rem 1rem; vertical-align: bottom; font-weight: 600; }
-        .table tbody tr { transition: background-color 0.15s ease-in-out; }
-        .table-striped tbody tr:nth-of-type(odd) { background-color: rgba(0, 0, 0, .03); }
-        .table-hover tbody tr:hover { background-color: rgba(0, 0, 0, .06); }
-        .table td { padding: .75rem 1rem; vertical-align: middle; border-top: 1px solid #dee2e6; }
-        .table-responsive { border-radius: .375rem; overflow-x: auto; }
+        /* 响应式调整 */
 
-        h1, h2 { color: #343a40; margin-bottom: 1rem; }
-        hr { border-top: 1px solid rgba(0, 0, 0, .1); margin-top: 1.5rem; margin-bottom: 1.5rem; }
+        /* 平板端 (768px - 991.98px) */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .sidebar-wrapper {
+                width: 200px; /* 平板端侧边栏略窄 */
+                padding-top: 1.5rem;
+            }
+            .sidebar-heading {
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+            .sidebar-list-group-item {
+                padding: 0.75rem 1rem;
+            }
+            .main-content-wrapper {
+                margin-left: 215px; /* 平板端调整内容区左边距 */
+                padding: 2rem;
+            }
+        }
 
-        /* 移动端适配 */
+        /* 手机端 (小于 768px) */
         @media (max-width: 767.98px) {
-            .content { margin: 1rem; }
-            .form-row > [class*="col-"] { margin-bottom: 1rem; }
-            .form-row > [class*="col-"]:last-child { margin-bottom: 0; }
-            .col-12 button.btn { width: 100%; }
+            .navbar-toggler-custom {
+                display: block; /* 手机端显示汉堡菜单 */
+            }
+            .sidebar-wrapper {
+                width: 280px; /* 手机端侧边栏宽度 */
+                transform: translateX(-100%); /* 手机端默认隐藏 */
+                box-shadow: none; /* 手机端侧边栏打开时，box-shadow可能不需要 */
+            }
+            .sidebar-wrapper.show {
+                transform: translateX(0); /* 手机端显示 */
+            }
+            /* 手机端侧边栏打开时，主内容区可以轻微偏移或覆盖 */
+            body.sidebar-open {
+                /* 增加一个蒙版效果，或将内容向右推 */
+                position: relative;
+                overflow: hidden; /* 防止背景滚动 */
+            }
+            body.sidebar-open::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5); /* 半透明蒙版 */
+                z-index: 1029; /* 在侧边栏之下，内容之上 */
+                transition: opacity 0.3s ease;
+            }
+
+            .main-content-wrapper {
+                margin-left: 1rem; /* 手机端内容区左右间距 */
+                margin-right: 1rem;
+                margin-top: 5rem; /* 为汉堡菜单和顶部留出更多空间 */
+                padding: 1.5rem;
+            }
+            .page-title {
+                font-size: 1.8rem;
+                margin-bottom: 1.5rem !important;
+            }
+            hr {
+                margin-top: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
         }
-        .navbar-toggler { margin-bottom: 1rem; margin-left: 0; }
+
+
+        /* 通用表单和按钮样式 (微调) */
+        .form-label { font-weight: 500; margin-bottom: .4rem; color: #34495e; }
+        .form-control {
+            border-radius: .4rem; /* 略微增加圆角 */
+            border: 1px solid #dcdfe6;
+            padding: .7rem .9rem;
+            font-size: .95rem;
+        }
+        .form-control:focus {
+            border-color: #66afe9;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25); /* 使用主题色阴影 */
+        }
+        .btn {
+            border-radius: .4rem; /* 略微增加圆角 */
+            font-size: .95rem;
+            padding: .7rem 1.2rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .btn i { margin-right: .6rem; }
+
+        /* 按钮颜色主题 */
+        .btn-primary { background-color: #3498db; border-color: #3498db; }
+        .btn-primary:hover { background-color: #2980b9; border-color: #2980b9; }
+        .btn-secondary { background-color: #95a5a6; border-color: #95a5a6; }
+        .btn-secondary:hover { background-color: #7f8c8d; border-color: #7f8c8d; }
+        .btn-danger { background-color: #e74c3c; border-color: #e74c3c; }
+        .btn-danger:hover { background-color: #c0392b; border-color: #c0392b; }
+        .btn-warning { background-color: #f39c12; border-color: #f39c12; color: #fff;}
+        .btn-warning:hover { background-color: #e67e22; border-color: #e67e22; }
+        .btn-success { background-color: #2ecc71; border-color: #2ecc71; }
+        .btn-success:hover { background-color: #27ae60; border-color: #27ae60; }
+        .btn-info { background-color: #3498db; border-color: #3498db; color: #fff;} /* 与 primary 相似，可自行区分 */
+        .btn-info:hover { background-color: #2980b9; border-color: #2980b9; }
+        .btn-dark { background-color: #34495e; border-color: #34495e; color: #fff;}
+        .btn-dark:hover { background-color: #2c3e50; border-color: #2c3e50; }
+
+
+        /* 表格样式 (优化) */
+        .table {
+            margin-bottom: 1.5rem;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: .75rem; /* 更大的圆角 */
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* 增加阴影 */
+        }
+        .table thead th {
+            background-color: #34495e; /* 更深的头部背景 */
+            color: #fff;
+            border-bottom: none; /* 移除底部边框 */
+            padding: 1rem 1.2rem;
+            vertical-align: middle;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        .table tbody td {
+            padding: 1rem 1.2rem;
+            vertical-align: middle;
+            border-top: 1px solid #eceff1; /* 更柔和的边框颜色 */
+        }
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #fcfcfc; /* 更浅的条纹背景 */
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f0f4f7; /* 悬停颜色 */
+        }
+        .table-responsive {
+            border-radius: .75rem;
+            overflow-x: auto;
+        }
+        .table-responsive > .table {
+            margin-bottom: 0; /* 移除容器内表格的额外margin */
+        }
+
+        /* 警告/成功消息 */
+        .alert {
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem; /* 增加圆角 */
+            font-size: 0.95rem;
+            border-width: 1px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .alert-success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .alert-info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; border-color: #ffeeba; color: #856404; }
+
+        /* 徽章 */
+        .badge {
+            padding: 0.5em 0.8em;
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: .3rem;
+            text-transform: uppercase;
+        }
+        .badge-secondary { background-color: #7f8c8d; color: #fff;}
+        .badge-primary { background-color: #3498db; color: #fff;}
+        .badge-success { background-color: #2ecc71; color: #fff;}
+        .badge-info { background-color: #3498db; color: #fff;}
+        .badge-warning { background-color: #f39c12; color: #fff;}
+        .badge-danger { background-color: #e74c3c; color: #fff;}
+
+
+        /* 评分星级 */
+        .text-warning { color: #f1c40f !important; } /* 更亮的黄色 */
+        .text-secondary { color: #bdc3c7 !important; } /* 柔和的灰色 */
+
+        /* Sticky footer (optional) */
+        .footer {
+            width: 100%;
+            padding: 1.5rem;
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: auto;
+            background-color: #ecf0f1;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
-    <%- include('../menu/sidebar.ejs') %> <div class="content">
-        <button class="navbar-toggler d-md-none mb-3 btn btn-outline-secondary" type="button" data-toggle="collapse" data-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span> 菜单
-        </button>
+    <button class="navbar-toggler-custom" type="button" data-toggle="collapse" data-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="fas fa-bars"></span>
+    </button>
 
-        <h1><%= pageTitle %></h1>
-        <hr>
-        <%- body %> </div>
+    <nav class="sidebar-wrapper collapse" id="sidebarCollapse">
+        <%- include('../menu/sidebar.ejs') %>
+    </nav>
 
-    <script src="/jquery-3.5.1.slim.min.js"></script>
-    <script src="/popper.min.js"></script>
-    <script src="/bootstrap.min.js"></script>
+    <div class="main-content-wrapper">
+        <h1 class="page-title mb-4"><%= title %></h1>
+        <%- body %>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57bFgtYhWf0Z+yW6aKjP3g36D7k3u" crossorigin="anonymous"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Add active class to current sidebar link
+            const currentPath = window.location.pathname;
+            $('.sidebar-list-group-item').each(function() {
+                // Check if the href matches the current path, or if it's the root path and current path is also root
+                if ($(this).attr('href') === currentPath || (currentPath === '/' && $(this).attr('href') === '/incomes')) {
+                    $(this).addClass('active');
+                } else {
+                    $(this).removeClass('active'); // Ensure only one is active
+                }
+            });
+
+            // Handle sidebar collapse on mobile
+            $('#sidebarCollapse').on('show.bs.collapse', function () {
+                $('body').addClass('sidebar-open');
+                // Optional: prevent body scroll when sidebar is open
+                // $('body').css('overflow', 'hidden');
+            }).on('hide.bs.collapse', function () {
+                $('body').removeClass('sidebar-open');
+                // $('body').css('overflow', 'auto');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            $(document).on('click', function(event) {
+                if ($(window).width() < 768) { // Only for small screens
+                    const sidebar = $('#sidebarCollapse');
+                    const toggler = $('.navbar-toggler-custom');
+                    // Check if sidebar is open and click is outside sidebar and toggler
+                    if (sidebar.hasClass('show') && !sidebar.is(event.target) && !toggler.is(event.target) && sidebar.has(event.target).length === 0 && toggler.has(event.target).length === 0) {
+                        sidebar.collapse('hide');
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,61 +1,91 @@
-<div class="container mt-4">
-    <h1>读书笔记统计</h1>
+<div class="container mt-4 mb-4">
+    <h1 class="page-title text-center mb-5">读书笔记统计</h1>
 
-    <form action="/booknote/statistics" method="GET" class="mb-4"> 
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label for="startDate" class="form-label">开始日期</label>
-                <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="endDate" class="form-label">结束日期</label>
-                <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <label for="groupByField" class="form-label">按...</label>
-                <select class="form-select" id="groupByField" name="groupByField">
-                    <option value="category" <%= groupByField === 'category' ? 'selected' : '' %>>类别</option>
-                    <option value="author" <%= groupByField === 'author' ? 'selected' : '' %>>作者</option>
-                    <option value="publishYear" <%= groupByField === 'publishYear' ? 'selected' : '' %>>出版年份</option>
-                    <option value="rating" <%= groupByField === 'rating' ? 'selected' : '' %>>评分</option>
-                    <option value="readYear" <%= groupByField === 'readYear' ? 'selected' : '' %>>阅读年份</option>
-                    <option value="readMonth" <%= groupByField === 'readMonth' ? 'selected' : '' %>>阅读月份</option>
-                </select>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <button type="submit" class="btn btn-dark w-100"><i class="fas fa-chart-pie me-2"></i>生成统计</button>
-            </div>
+    <div class="card shadow-lg mb-5"> <%# 增加阴影深度 %>
+        <div class="card-header bg-primary text-white text-center py-3"> <%# 头部使用主题色，居中文字 %>
+            <h4 class="mb-0"><i class="fas fa-chart-line mr-2"></i>统计选项</h4> <%# 更换图标以更符合统计图表的语义 %>
         </div>
-    </form>
+        <div class="card-body p-4"> <%# 增加内边距 %>
+            <form action="/booknote/statistics" method="GET">
+                <div class="form-row"> <%# Use form-row for filters %>
+                    <div class="form-group col-12 col-md-4 mb-3"> <%# 手机全宽，平板及以上各占1/3，增加底部间距 %>
+                        <label for="startDate" class="form-label">开始日期</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+                    </div>
+                    <div class="form-group col-12 col-md-4 mb-3">
+                        <label for="endDate" class="form-label">结束日期</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+                    </div>
+                    <div class="form-group col-12 col-md-4 mb-3">
+                        <label for="groupByField" class="form-label">按...</label>
+                        <select class="form-control" id="groupByField" name="groupByField">
+                            <option value="category" <%= groupByField === 'category' ? 'selected' : '' %>>类别</option>
+                            <option value="author" <%= groupByField === 'author' ? 'selected' : '' %>>作者</option>
+                            <option value="publishYear" <%= groupByField === 'publishYear' ? 'selected' : '' %>>出版年份</option>
+                            <option value="rating" <%= groupByField === 'rating' ? 'selected' : '' %>>评分</option>
+                            <option value="readYear" <%= groupByField === 'readYear' ? 'selected' : '' %>>阅读年份</option>
+                            <option value="readMonth" <%= groupByField === 'readMonth' ? 'selected' : '' %>>阅读月份</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-12 d-flex align-items-end mt-3 mt-md-0"> <%# 搜索按钮占据全宽，居中 %>
+                        <button type="submit" class="btn btn-dark w-100 btn-lg"><i class="fas fa-chart-pie mr-2"></i>生成统计</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <% if (statistics.length > 0) { %>
-        <table class="table table-striped table-hover mt-4">
-            <thead class="table-dark">
-                <tr>
-                    <th>分组 (<%= groupByField %>)</th>
-                    <th>笔记数量</th>
-                    <th>平均评分</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% statistics.forEach(stat => { %>
+        <div class="table-responsive mt-5"> <%# 增加顶部间距 %>
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
                     <tr>
-                        <td>
-                            <% if (groupByField === 'readMonth') { %>
-                                <%= stat._id.year %>年<%= stat._id.month %>月
-                            <% } else { %>
-                                <%= stat._id || 'N/A' %>
-                            <% } %>
-                        </td>
-                        <td><%= stat.count %></td>
-                        <td><%= stat.avgRating ? stat.avgRating.toFixed(2) : 'N/A' %></td>
+                        <th scope="col">分组 (<%= groupByField %>)</th>
+                        <th scope="col">笔记数量</th>
+                        <th scope="col">平均评分</th>
                     </tr>
-                <% }); %>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <% statistics.forEach(stat => { %>
+                        <tr>
+                            <td>
+                                <% if (groupByField === 'readMonth') { %>
+                                    <%= stat._id.year %>年<%= stat._id.month %>月
+                                <% } else if (groupByField === 'rating' && stat._id) { %>
+                                    <% for (let i = 0; i < stat._id; i++) { %>
+                                        <i class="fas fa-star text-warning"></i>
+                                    <% } %>
+                                    <% for (let i = stat._id; i < 5; i++) { %>
+                                        <i class="far fa-star text-secondary"></i>
+                                    <% } %>
+                                <% } else { %>
+                                    <%= stat._id || 'N/A' %>
+                                <% } %>
+                            </td>
+                            <td><span class="badge badge-primary badge-lg"><%= stat.count %></span></td> <%# 使用徽章突出显示数量 %>
+                            <td>
+                                <% if (stat.avgRating) { %>
+                                    <%= stat.avgRating.toFixed(2) %>
+                                    <% for (let i = 0; i < Math.round(stat.avgRating); i++) { %>
+                                        <i class="fas fa-star text-warning small ml-1"></i>
+                                    <% } %>
+                                    <% for (let i = Math.round(stat.avgRating); i < 5; i++) { %>
+                                        <i class="far fa-star text-secondary small ml-1"></i>
+                                    <% } %>
+                                <% } else { %>
+                                    N/A
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
     <% } else { %>
-        <p class="alert alert-info">没有可用的统计数据。</p>
+        <p class="alert alert-info text-center mt-5">没有可用的统计数据。请尝试调整筛选条件。</p>
     <% } %>
 
-    <a href="/booknote" class="btn btn-secondary mt-3">返回读书笔记列表</a> <%# <-- 修改点：/booknote %>
+    <div class="text-center mt-5 mb-4"> <%# 增加上下间距 %>
+        <a href="/booknote" class="btn btn-secondary btn-lg"><i class="fas fa-arrow-alt-circle-left mr-2"></i>返回读书笔记列表</a>
+    </div>
 </div>

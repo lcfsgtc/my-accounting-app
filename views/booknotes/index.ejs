@@ -1,54 +1,67 @@
-<div class="container mt-4">
-    <h1>读书笔记列表</h1>
+<div class="container mt-4 mb-4">
+    <h1 class="page-title text-center mb-5">读书笔记列表</h1>
 
-    <a href="/booknote/add" class="btn btn-primary mb-4"> <i class="fas fa-plus me-2"></i>新增读书笔记
-    </a>
-    <a href="/booknote/export" class="btn btn-secondary mb-4 ms-2"> <i class="fas fa-file-export me-2"></i>导出Excel
-    </a>
-    <a href="/booknote/statistics" class="btn btn-info mb-4 ms-2"> <i class="fas fa-chart-bar me-2"></i>查看统计
-    </a>
+    <div class="d-flex flex-wrap mb-4 justify-content-center justify-content-md-start">
+        <a href="/booknote/add" class="btn btn-primary btn-lg mb-3 mr-md-3 w-100 w-md-auto">
+            <i class="fas fa-plus mr-2"></i>新增读书笔记
+        </a>
+        <a href="/booknote/export" class="btn btn-success btn-lg mb-3 mr-md-3 w-100 w-md-auto">
+            <i class="fas fa-file-export mr-2"></i>导出Excel
+        </a>
+        <a href="/booknote/statistics" class="btn btn-info btn-lg mb-3 w-100 w-md-auto">
+            <i class="fas fa-chart-bar mr-2"></i>查看统计
+        </a>
+    </div>
 
     <% if (success_msg) { %>
-        <div class="alert alert-success"><%= success_msg %></div>
+        <div class="alert alert-success" role="alert"><%= success_msg %></div>
     <% } %>
     <% if (error_msg) { %>
-        <div class="alert alert-danger"><%= error_msg %></div>
+        <div class="alert alert-danger" role="alert"><%= error_msg %></div>
     <% } %>
 
-    <form action="/booknote" method="GET" class="mb-4"> <div class="row g-3 align-items-end">
-            <div class="col-md-3 col-sm-6">
-                <label for="searchTitle" class="form-label">书名/笔记</label>
-                <input type="text" class="form-control" id="searchTitle" name="searchTitle" value="<%= searchTitle %>">
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <label for="searchAuthor" class="form-label">作者</label>
-                <input type="text" class="form-control" id="searchAuthor" name="searchAuthor" value="<%= searchAuthor %>">
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <label for="searchCategory" class="form-label">分类</label>
-                <input type="text" class="form-control" id="searchCategory" name="searchCategory" value="<%= searchCategory %>">
-            </div>
-            <div class="col-md-2 col-sm-4">
-                <label for="minRating" class="form-label">最低评分</label>
-                <input type="number" class="form-control" id="minRating" name="minRating" min="1" max="5" value="<%= minRating %>">
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <button type="submit" class="btn btn-dark w-100"><i class="fas fa-search me-2"></i>搜索</button>
-            </div>
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+            <h5 class="mb-0 text-dark"><i class="fas fa-filter mr-2 text-primary"></i>筛选条件</h5>
         </div>
-    </form>
+        <div class="card-body pt-3 pb-4">
+            <form action="/booknote" method="GET">
+                <div class="form-row"> <%# Use form-row for search filters %>
+                    <div class="form-group col-12 col-md-4 col-lg-3">
+                        <label for="searchTitle" class="form-label">书名/笔记</label>
+                        <input type="text" class="form-control" id="searchTitle" name="searchTitle" value="<%= searchTitle %>" placeholder="输入书名或笔记关键词">
+                    </div>
+                    <div class="form-group col-12 col-md-4 col-lg-2">
+                        <label for="searchAuthor" class="form-label">作者</label>
+                        <input type="text" class="form-control" id="searchAuthor" name="searchAuthor" value="<%= searchAuthor %>" placeholder="输入作者">
+                    </div>
+                    <div class="form-group col-12 col-md-4 col-lg-2">
+                        <label for="searchCategory" class="form-label">分类</label>
+                        <input type="text" class="form-control" id="searchCategory" name="searchCategory" value="<%= searchCategory %>" placeholder="输入分类">
+                    </div>
+                    <div class="form-group col-12 col-md-4 col-lg-2">
+                        <label for="minRating" class="form-label">最低评分</label>
+                        <input type="number" class="form-control" id="minRating" name="minRating" min="1" max="5" value="<%= minRating %>" placeholder="1-5">
+                    </div>
+                    <div class="form-group col-12 col-md-8 col-lg-3 d-flex align-items-end mt-3 mt-md-0">
+                        <button type="submit" class="btn btn-dark w-100 btn-lg"><i class="fas fa-search mr-2"></i>搜索</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <% if (bookNotes.length > 0) { %>
         <div class="table-responsive">
             <table class="table table-hover table-striped">
-                <thead class="table-dark">
+                <thead class="thead-dark">
                     <tr>
-                        <th>书名</th>
-                        <th>作者</th>
-                        <th>分类</th>
-                        <th>阅读日期</th>
-                        <th>评分</th>
-                        <th>操作</th>
+                        <th scope="col">书名</th>
+                        <th scope="col">作者</th>
+                        <th scope="col" class="d-none d-md-table-cell">分类</th>
+                        <th scope="col" class="d-none d-lg-table-cell">阅读日期</th> <%# 阅读日期在小屏幕和平板上隐藏，在PC上显示 %>
+                        <th scope="col">评分</th>
+                        <th scope="col" class="text-center">操作</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,8 +69,8 @@
                         <tr>
                             <td><%= note.title %></td>
                             <td><%= note.author %></td>
-                            <td><%= note.category %></td>
-                            <td><%= note.readDate ? new Date(note.readDate).toLocaleDateString('zh-CN') : 'N/A' %></td>
+                            <td class="d-none d-md-table-cell"><%= note.category %></td>
+                            <td class="d-none d-lg-table-cell"><%= note.readDate ? new Date(note.readDate).toLocaleDateString('zh-CN') : 'N/A' %></td>
                             <td>
                                 <% for (let i = 0; i < note.rating; i++) { %>
                                     <i class="fas fa-star text-warning"></i>
@@ -66,26 +79,30 @@
                                     <i class="far fa-star text-secondary"></i>
                                 <% } %>
                             </td>
-                            <td>
-                                <a href="/booknote/edit/<%= note._id %>" class="btn btn-warning btn-sm me-2" title="编辑"> <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="/booknote/delete/<%= note._id %>?_method=DELETE" method="POST" style="display: inline;" onsubmit="return confirm('确定要删除这篇读书笔记吗？');"> <button type="submit" class="btn btn-danger btn-sm" title="删除">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
+                            <td class="text-center">
+                                <div class="d-flex flex-nowrap justify-content-center">
+                                    <a href="/booknote/edit/<%= note._id %>" class="btn btn-warning btn-sm mr-2" title="编辑">
+                                        <i class="fas fa-edit"></i><span class="d-none d-lg-inline ml-1">编辑</span> <%# 编辑文字在平板和PC上显示 %>
+                                    </a>
+                                    <form action="/booknote/delete/<%= note._id %>?_method=DELETE" method="POST" style="display: inline;" onsubmit="return confirm('确定要删除这篇读书笔记吗？');">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="删除">
+                                            <i class="fas fa-trash-alt"></i><span class="d-none d-lg-inline ml-1">删除</span> <%# 删除文字在平板和PC上显示 %>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         <tr class="table-light">
                             <td colspan="6">
                                 <strong>笔记:</strong> <%- note.notes.replace(/\n/g, '<br>') %>
                                 <% if (note.tags && note.tags.length > 0) { %>
-                                    <div class="mt-2">
+                                    <div class="mt-2 d-flex flex-wrap">
                                         <% note.tags.forEach(tag => { %>
-                                            <span class="badge bg-secondary me-1"><i class="fas fa-tag me-1"></i><%= tag %></span>
+                                            <span class="badge badge-secondary mr-1 mb-1"><i class="fas fa-tag mr-1"></i><%= tag %></span>
                                         <% }) %>
                                     </div>
                                 <% } %>
-                                <small class="text-muted d-block mt-1">创建于: <%= note.createdAt ? new Date(note.createdAt).toLocaleString('zh-CN') : 'N/A' %></small>
+                                <small class="text-muted d-block mt-2">创建于: <%= note.createdAt ? new Date(note.createdAt).toLocaleString('zh-CN') : 'N/A' %></small>
                                 <% if (note.updatedAt && note.updatedAt > note.createdAt) { %>
                                     <small class="text-muted d-block">更新于: <%= new Date(note.updatedAt).toLocaleString('zh-CN') %></small>
                                 <% } %>
@@ -96,19 +113,28 @@
             </table>
         </div>
 
-        <nav aria-label="Page navigation">
+        <nav aria-label="Page navigation" class="mt-4">
             <ul class="pagination justify-content-center">
                 <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                    <a class="page-link" href="/booknote?page=<%= currentPage - 1 %>&limit=<%= limit %>&searchTitle=<%= searchTitle %>&searchAuthor=<%= searchAuthor %>&searchCategory=<%= searchCategory %>&minRating=<%= minRating %>">上一页</a> </li>
+                    <a class="page-link" href="/booknote?page=<%= currentPage - 1 %>&limit=<%= limit %>&searchTitle=<%= searchTitle %>&searchAuthor=<%= searchAuthor %>&searchCategory=<%= searchCategory %>&minRating=<%= minRating %>" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                        <span class="sr-only">上一页</span>
+                    </a>
+                </li>
                 <% for (let i = 1; i <= totalPages; i++) { %>
                     <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                        <a class="page-link" href="/booknote?page=<%= i %>&limit=<%= limit %>&searchTitle=<%= searchTitle %>&searchAuthor=<%= searchAuthor %>&searchCategory=<%= searchCategory %>&minRating=<%= minRating %>"><%= i %></a> </li>
+                        <a class="page-link" href="/booknote?page=<%= i %>&limit=<%= limit %>&searchTitle=<%= searchTitle %>&searchAuthor=<%= searchAuthor %>&searchCategory=<%= searchCategory %>&minRating=<%= minRating %>"><%= i %></a>
+                    </li>
                 <% } %>
                 <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                    <a class="page-link" href="/booknote?page=<%= currentPage + 1 %>&limit=<%= limit %>&searchTitle=<%= searchTitle %>&searchAuthor=<%= searchAuthor %>&searchCategory=<%= searchCategory %>&minRating=<%= minRating %>">下一页</a> </li>
+                    <a class="page-link" href="/booknote?page=<%= currentPage + 1 %>&limit=<%= limit %>&searchTitle=<%= searchTitle %>&searchAuthor=<%= searchAuthor %>&searchCategory=<%= searchCategory %>&minRating=<%= minRating %>" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">下一页</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     <% } else { %>
-        <p class="alert alert-info">没有找到读书笔记。</p>
+        <p class="alert alert-info text-center mt-5">没有找到读书笔记。</p>
     <% } %>
 </div>
