@@ -2,6 +2,7 @@ const path = require('path');
 const querystring = require('querystring');
 const multer = require('multer');
 const fs = require('fs').promises; // For deleting files
+const ExcelJS = require('exceljs'); // 用于导出Excel
 module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) => {
 
     // 日记列表页面
@@ -460,4 +461,61 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
             res.status(500).send('Server Error');
         }
     });*/
+    // 导出日记到 Excel
+    app.get('/diary/export', requireLogin, async (req, res) => {
+        try {
+            const userId = req.session.userId;
+            const diaries = await Diary.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ date: 'desc' });
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('日记列表');
+
+            // 设置列头
+            worksheet.columns = [
+                { header: '日期', key: 'date', width: 15 },
+                { header: '标题', key: 'title', width: 30 },
+                { header: '天气', key: 'weather', width: 10 },
+                { header: '心情', key: 'mood', width: 10 },
+                { header: '地点', key: 'location', width: 20 },
+                { header: '相关人物', key: 'people', width: 25 },
+                { header: '标签', key: 'tags', width: 25 },
+                { header: '计划列表', key: 'planList', width: 40 },
+                { header: '事件列表', key: 'eventList', width: 40 },
+                { header: '感受', key: 'feeling', width: 50 },
+                { header: '总结', key: 'summary', width: 50 },
+                { header: '图片链接', key: 'imageUrls', width: 60 }
+            ];
+
+            // 添加数据行
+            diaries.forEach(diary => {
+                worksheet.addRow({
+                    date: new Date(diary.date).toLocaleDateString('zh-CN'), // 格式化日期
+                    title: diary.title,
+                    weather: diary.weather,
+                    mood: diary.mood,
+                    location: diary.location,
+                    people: diary.people ? diary.people.join(', ') : '', // 将数组转换为逗号分隔的字符串
+                    tags: diary.tags ? diary.tags.join(', ') : '', // 将数组转换为逗号分隔的字符串
+                    planList: diary.planList ? diary.planList.join('\n') : '', // 换行符分隔
+                    eventList: diary.eventList ? diary.eventList.join('\n') : '', // 换行符分隔
+                    feeling: diary.feeling,
+                    summary: diary.summary,
+                    imageUrls: diary.imageUrls ? diary.imageUrls.join('\n') : '' // 换行符分隔
+                });
+            });
+
+            // 设置响应头，告诉浏览器这是一个 Excel 文件
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', 'attachment; filename=' + encodeURIComponent('日记列表.xlsx'));
+
+            // 将工作簿写入响应流
+            await workbook.xlsx.write(res);
+            res.end();
+
+        } catch (err) {
+            console.error("Error exporting diaries to Excel:", err);
+            res.status(500).send('Server Error: ' + err.message);
+        }
+    });
+
 }

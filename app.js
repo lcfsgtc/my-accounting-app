@@ -8,12 +8,16 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const fs = require('fs');
+const methodOverride = require('method-override'); // <-- 新增
+const expressLayouts = require('express-ejs-layouts'); // <-- 新增
+const flash = require('connect-flash');// <-- 新增
 
 const userRoute = require('./routes/user');
 const incomeRoute = require('./routes/income');
 const expenseRoute = require('./routes/expense');
 const assetRoute = require('./routes/asset'); 
 const diaryRoute = require('./routes/diary');
+const booknoteRoute = require('./routes/booknote');
 
 const app = express();
 const port = 3000;
@@ -35,14 +39,23 @@ const Expense = require('./models/expense');
 const Income = require('./models/income');
 const Asset = require('./models/asset'); 
 const Diary= require('./models/diary');
+const Booknote= require('./models/bookNote');
 // 中间件
 app.set('view engine', 'ejs');
 //app.set('views', path.join(__dirname, 'views'));
 app.set('views', path.join(PROJECT_ROOT, 'views'));
+//app.set('views', './views'); // 确保视图路径正确
 //app.use(express.static('public'));
 app.use(express.static(path.join(PROJECT_ROOT, 'public')));
 
+// 配置 express-ejs-layouts
+app.use(expressLayouts); // <-- 使用布局
+//app.set('layout', 'layouts/main'); // 设置默认布局文件 (如果你有的话), 否则在每个页面指定
+
 app.use(bodyParser.urlencoded({ extended: true }));
+// Method override
+app.use(methodOverride('_method')); // <-- 使用 method-override
+
 app.use(bodyParser.json());
 app.use(function(req, res, next) {
     //res.locals.basedir = path.join(__dirname, 'views');
@@ -56,6 +69,18 @@ app.use(session({
     store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
+// Connect flash
+app.use(flash());
+
+// Global variables for flash messages
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error'); // Passport.js 通常会设置 'error'
+    res.locals.session = req.session; // 传递 session 信息到所有模板
+    next();
+});
+
 // 配置 multer 中间件
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -108,7 +133,8 @@ incomeRoute(app, Income, requireLogin,mongoose, path, querystring, Parser,format
 expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,formatDate);
 assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); 
 diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
-
+booknoteRoute(app, Booknote, requireLogin,mongoose, path, querystring,upload);
+//app.use('/booknotes', bookNotesRoutes);
 /*const actualPort = process.env.PORT || port;
 // 启动服务器
 app.listen(actualPort, () => {

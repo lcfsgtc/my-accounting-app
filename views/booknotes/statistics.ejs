@@ -1,0 +1,61 @@
+<div class="container mt-4">
+    <h1>读书笔记统计</h1>
+
+    <form action="/booknote/statistics" method="GET" class="mb-4"> 
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label for="startDate" class="form-label">开始日期</label>
+                <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="endDate" class="form-label">结束日期</label>
+                <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label for="groupByField" class="form-label">按...</label>
+                <select class="form-select" id="groupByField" name="groupByField">
+                    <option value="category" <%= groupByField === 'category' ? 'selected' : '' %>>类别</option>
+                    <option value="author" <%= groupByField === 'author' ? 'selected' : '' %>>作者</option>
+                    <option value="publishYear" <%= groupByField === 'publishYear' ? 'selected' : '' %>>出版年份</option>
+                    <option value="rating" <%= groupByField === 'rating' ? 'selected' : '' %>>评分</option>
+                    <option value="readYear" <%= groupByField === 'readYear' ? 'selected' : '' %>>阅读年份</option>
+                    <option value="readMonth" <%= groupByField === 'readMonth' ? 'selected' : '' %>>阅读月份</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <button type="submit" class="btn btn-dark w-100"><i class="fas fa-chart-pie me-2"></i>生成统计</button>
+            </div>
+        </div>
+    </form>
+
+    <% if (statistics.length > 0) { %>
+        <table class="table table-striped table-hover mt-4">
+            <thead class="table-dark">
+                <tr>
+                    <th>分组 (<%= groupByField %>)</th>
+                    <th>笔记数量</th>
+                    <th>平均评分</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% statistics.forEach(stat => { %>
+                    <tr>
+                        <td>
+                            <% if (groupByField === 'readMonth') { %>
+                                <%= stat._id.year %>年<%= stat._id.month %>月
+                            <% } else { %>
+                                <%= stat._id || 'N/A' %>
+                            <% } %>
+                        </td>
+                        <td><%= stat.count %></td>
+                        <td><%= stat.avgRating ? stat.avgRating.toFixed(2) : 'N/A' %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p class="alert alert-info">没有可用的统计数据。</p>
+    <% } %>
+
+    <a href="/booknote" class="btn btn-secondary mt-3">返回读书笔记列表</a> <%# <-- 修改点：/booknote %>
+</div>
