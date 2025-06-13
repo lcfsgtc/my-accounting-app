@@ -70,8 +70,13 @@ app.use(session({
     cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 // Connect flash
+//  Flash middleware (must be after session)
 app.use(flash());
-
+// 3. Make flash messages available in res.locals (must be after flash)
+app.use((req, res, next) => {
+    res.locals.messages = req.flash();
+    next();
+});
 // Global variables for flash messages
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
@@ -101,7 +106,7 @@ const requireLogin = (req, res, next) => {
     if (!req.session.userId) {
         console.log("User not logged in. Redirecting to /login");
         return res.redirect('/login');
-    }
+    }    
     console.log("User logged in. Proceeding...");
     next();
 };

@@ -1,11 +1,11 @@
 const path = require('path');
 const querystring = require('querystring');
 const mongoose = require('mongoose'); // 引入 Mongoose 模块
-module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,formatDate) => {
+module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,formatDate) => { 
     // 收入列表页面
     app.get('/incomes', requireLogin, async (req, res) => {
         try {
-            const { startDate, endDate, category, subcategory } = req.query;
+            const { startDate, endDate, category, subcategory, page = 1, limit = 10 } = req.query;
             const userId = req.session.userId;
 
             let query = { userId: new mongoose.Types.ObjectId(String(userId)) };
@@ -21,9 +21,43 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
             if (subcategory) {
                 query.subcategory = subcategory;
             }
-            const queryString = querystring.encode(req.query); //生成查询字符串
-            const incomes = await Income.find(query).sort({ date: 'desc' });
-            res.render('incomes/index', { incomes: incomes, queryString: queryString, path: path , __dirname: __dirname , basedir:path.join(__basedir, 'views') });// 传递 path  __dirname, basedir: path.join(__dirname, 'views')
+
+            const parsedLimit = parseInt(limit);
+            const parsedPage = parseInt(page);
+            const skip = (parsedPage - 1) * parsedLimit;
+
+            const totalIncomes = await Income.countDocuments(query);
+            const totalPages = Math.ceil(totalIncomes / parsedLimit);
+
+            const incomes = await Income.find(query)
+                                        .sort({ date: 'desc' })
+                                        .skip(skip)
+                                        .limit(parsedLimit);
+
+            const currentQueryParams = { ...req.query };
+            delete currentQueryParams.page;
+            delete currentQueryParams.limit;
+            const queryString = querystring.encode(currentQueryParams); //生成查询字符串
+
+            //const queryString = querystring.encode(req.query); //生成查询字符串
+            //const incomes = await Income.find(query).sort({ date: 'desc' });
+            res.render('incomes/index', { 
+                activeMenu: 'incomes',
+                layout: 'incomes/layout.ejs', 
+                title: '收入列表',
+                pageTitle: '收入列表' ,               
+                incomes: incomes, 
+                queryString: queryString, 
+                startDate: startDate || '',
+                endDate: endDate || '',
+                category: category || '',
+                subcategory: subcategory || '',
+                currentPage: parsedPage,
+                totalPages: totalPages,                
+                path: path ,
+                __dirname: __dirname ,
+                basedir:path.join(__basedir, 'views')
+            });// 传递 path  __dirname, basedir: path.join(__dirname, 'views')
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');
@@ -162,6 +196,10 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
                 const statistics = await Income.aggregate(pipeline);
 
                 res.render('incomes/statistics', {
+                    activeMenu: 'incomes',
+                    layout: 'incomes/layout.ejs', // 明确指定布局
+                    title: '收入统计',
+                    pageTitle: '收入统计',                    
                     statistics: statistics,
                     startDate: startDate || '',
                     endDate: endDate || '',
@@ -382,7 +420,12 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
     }); */  
     // 添加收入记录页面
     app.get('/incomes/add', requireLogin, (req, res) => {
-        res.render('incomes/add');
+        res.render('incomes/add',{
+            activeMenu: 'incomes',
+            layout: 'incomes/layout.ejs', 
+            title: '新增收入',
+            pageTitle: '新增收入'          
+        });
     });
     // 添加收入记录
     app.post('/incomes/add', requireLogin, async (req, res) => {
@@ -401,7 +444,17 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
                 userId: req.session.userId
             });
             await newIncome.save();
-            res.redirect('/incomes');
+            req.flash('success', '收入记录添加成功！'); // 添加成功消息
+            req.flash('error', '添加收入记录失败，请重试。' + (err.message || '')); // 添加错误消息，包含具体错误信息            
+            //res.redirect('/incomes');
+            // 重新渲染添加页面，并保留用户输入的数据
+            res.render('incomes/add', {
+                activeMenu: 'incomes',
+                layout: 'incomes/layout.ejs', // 明确指定布局
+                title: '新增收入',
+                pageTitle: '新增收入',
+                oldData: req.body // 将用户提交的数据传回，以便在表单中预填充
+            });            
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');
@@ -422,33 +475,82 @@ module.exports = (app, Income, requireLogin,mongoose, path, querystring, Parser,
     app.get('/incomes/edit/:id', requireLogin, async (req, res) => {
         try {
             const id = req.params.id;
+            //const userId = req.user._id;
             const income = await Income.findById(id);
-            res.render('incomes/edit', { income: income });
+            //const income = await Income.findOne({ _id: id, userId: userId });
+            if (!income) {
+                req.flash('error', '未找到该收入记录或您无权访问。');
+                return res.redirect('/incomes');
+            }            
+            res.render('incomes/edit', { 
+                activeMenu: 'incomes',
+                layout: 'incomes/layout.ejs', 
+                title: '编辑收入',
+                pageTitle: '编辑收入' ,               
+                income: income 
+            });
         } catch (err) {
-            console.error(err);
-            res.status(500).send('Server Error');
+            //console.error(err);
+            console.error("Error fetching income for edit:", err);
+            req.flash('error', '获取收入记录失败，请重试。');   
+            res.redirect('/incomes'); // 获取失败重定向回列表         
+           // res.status(500).send('Server Error');
         }
     });
     // 更新收入记录
     app.post('/incomes/edit/:id', requireLogin, async (req, res) => {
         try {
             const id = req.params.id;
+            //const userId = req.user._id;
             const { description, amount, category, subcategory, date } = req.body;
             console.log("Received date:", date);
             //const parsedDate = new Date(date + 'Z'); // Append 'Z' for UTC
             //const parsedDate = new Date(date)
-            //console.log("Parsed date:", parsedDate);               
-            await Income.findByIdAndUpdate(id, {
+            //console.log("Parsed date:", parsedDate); 
+
+            const updatedIncome=await Income.findByIdAndUpdate(id, {
                 description: description,
                 amount: amount,
                 category: category,
                 subcategory: subcategory,
                 date: date
             });
+
+            /*const updatedIncome = await Income.findOneAndUpdate(
+                { _id: id, userId: userId }, // 确保只有记录的拥有者才能更新
+                {
+                    description: description,
+                    amount: amount,
+                    category: category,
+                    subcategory: subcategory,
+                    date: new Date(date) // 将日期字符串转换为 Date 对象
+                },
+                { new: true, runValidators: true } // 返回更新后的文档并运行模型验证
+            );*/
+
+            if (!updatedIncome) {
+                req.flash('error', '未找到要更新的收入记录，或您无权更新此记录。');
+                return res.redirect('/incomes');
+            }            
+            req.flash('success', '收入记录更新成功！');
             res.redirect('/incomes');
         } catch (err) {
-            console.error(err);
-            res.status(500).send('Server Error');
+            //console.error(err);
+            //res.status(500).send('Server Error');
+            console.error("Error updating income:", err);
+            req.flash('error', '更新收入记录失败，请重试。' + (err.message || '')); // 添加错误消息，包含具体错误信息
+
+            // 重新渲染编辑页面，并带上错误和用户输入数据
+            const id = req.params.id;
+            // 构造一个临时的 income 对象来填充表单，保留用户最新的输入
+            const income = { id: id, ...req.body };
+            res.render('incomes/edit', {
+                activeMenu: 'incomes',
+                layout: 'incomes/layout.ejs', // 明确指定布局
+                title: '编辑收入',
+                pageTitle: '编辑收入',
+                income: income // 传递用户提交的数据
+            });            
         }
     });
 }

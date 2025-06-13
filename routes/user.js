@@ -79,6 +79,7 @@ const checkRegistrationLimit = async (req, res, next) => {
         // 将用户 ID 存储在 session 中
         req.session.userId = user._id;
         req.session.isAdmin = user.isAdmin;
+        //req.user = user;
         res.redirect('/dashboard');
       } catch (err) {
         console.error(err);
