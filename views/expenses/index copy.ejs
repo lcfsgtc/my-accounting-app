@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支出列表</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa; /* 轻微的背景色，使界面更柔和 */
+        }
+        /* 自定义样式以适应侧边栏和主内容布局 */
+        .app-container {
+            display: flex; /* 使用 Flexbox 进行主布局 */
+            flex-wrap: wrap; /* Allow wrapping columns on smaller screens */
+            padding-top: 20px; /* 顶部内边距 */
+            padding-bottom: 20px; /* 底部内边距 */
+            min-height: 100vh; /* 确保内容撑开整个视口高度 */
+        }
+        .main-content-area {
+            flex-grow: 1; /* 主内容区域占据剩余空间 */
+            /* Responsive padding-left based on screen size */
+            padding-left: 15px; /* Default padding for small screens */
+        }
+        /* Adjust padding for larger screens */
+        @media (min-width: 768px) { /* Medium devices (tablets, 768px and up) */
+            .main-content-area {
+                padding-left: 30px; /* More space for tablets and desktops */
+            }
+        }
+
+        .form-row .form-group {
+            margin-bottom: 1rem; /* 增加表单组之间的垂直间距 */
+        }
+        .filter-buttons {
+            margin-bottom: 20px; /* 筛选按钮下方间距 */
+            display: flex; /* 让筛选和导出按钮并排 */
+            gap: 10px; /* 按钮之间间距，Bootstrap 4 没有原生 gap，这里是自定义样式 */
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+        }
+        /* 如果希望 Bootstrap 4 的按钮有间距，可以使用 mr-2 等类 */
+        .filter-buttons .btn {
+            margin-right: 10px; /* 或者使用 Bootstrap 的 mr-2/mr-3 */
+        }
+        .action-buttons {
+            margin-top: 20px; /* 添加收入/统计按钮上方间距 */
+            margin-bottom: 20px; /* 添加收入/统计按钮下方间距 */
+            display: flex; /* Make buttons in action-buttons row */
+            flex-wrap: wrap; /* Allow wrapping */
+            gap: 10px; /* Space between buttons */
+        }
+        /* 确保 list-group-item 样式正确应用 */
+        .list-group-item {
+            border-radius: .25rem; /* 圆角 */
+            border: 1px solid rgba(0,0,0,.125); /* 边框 */
+        }
+
+        /* Adjust form-row behavior for smaller screens */
+        @media (max-width: 767.98px) {
+            .form-row {
+                flex-direction: column; /* Stack form groups vertically */
+            }
+            .form-row .form-group {
+                width: 100%; /* Full width for form groups */
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid app-container">
+    <%- include(path.join(basedir, 'menu', 'sidebar.ejs')) %> 
+    <div class="col-12 col-sm-8 col-md-10 main-content-area">
+        <h1>支出列表</h1>
+        <form action="/expenses" method="GET">
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="startDate">开始日期:</label>
+                    <input type="date" class="form-control" id="startDate" name="startDate" value="<%= typeof startDate !== 'undefined' ? startDate : '' %>">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="endDate">结束日期:</label>
+                    <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof endDate !== 'undefined' ? endDate : '' %>">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="category">大类:</label>
+                    <select class="form-control" id="category" name="category"></select>
+                        <option value="">所有大类</option>
+                        <% distinctCategories.forEach(cat => { %>
+                            <option value="<%= cat %>" <%= typeof query !== 'undefined' && query.category === cat ? 'selected' : '' %>>
+                                <%= cat %>
+                            </option>
+                        <% }); %>
+                    </select>                    
+                    <!--input type="text" class="form-control" id="category" name="category" value="<%= typeof category !== 'undefined' ? category : '' %>"-->
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="subcategory">小类:</label>
+                    <!--input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= typeof subcategory !== 'undefined' ? subcategory : '' %>"-->
+                    <select class="form-control" id="subcategory" name="subcategory">
+                        <option value="">所有小类</option>
+                        <% distinctSubcategories.forEach(subcat => { %>
+                            <option value="<%= subcat %>" <%= typeof query !== 'undefined' && query.subcategory === subcat ? 'selected' : '' %>>
+                                <%= subcat %>
+                            </option>
+                        <% }); %>
+                    </select>                    
+                </div>
+            </div>
+            <div class="filter-buttons">
+                <button type="submit" class="btn btn-primary">筛选</button>
+                <!--a href="/expenses/export<%=queryString%>" class="btn btn-secondary">导出</a-->
+                <a href="/expenses/export<%= queryString ? '?' + queryString : '' %>" class="btn btn-secondary">导出</a>
+            </div>
+        </form>
+        <div class="action-buttons">
+            <a href="/expenses/add" class="btn btn-success">添加支出</a>
+            <a href="/expenses/statistics" class="btn btn-info">支出统计</a>
+        </div>
+
+        <hr>
+        <h2>支出记录</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>描述</th>
+                    <th>金额</th>
+                    <th>大类</th>
+                    <th>小类</th>
+                    <th>日期</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% if (expenses && expenses.length > 0) { %>
+                    <% expenses.forEach(expense => { %>
+                        <tr>
+                            <td><%= expense.description %></td>
+                            <td><%= expense.amount %></td>
+                            <td><%= expense.category %></td>
+                            <td><%= expense.subcategory %></td>
+                            <td><%= new Date(expense.date).toLocaleDateString() %></td>
+                            <td>
+                                <a href="/expenses/edit/<%= expense._id %>" class="btn btn-sm btn-warning">编辑</a>
+                                <form action="/expenses/delete/<%= expense._id %>" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除吗？')">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6">暂无支出记录。</td>
+                    </tr>
+                <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="/jquery-3.5.1.slim.min.js"></script>
+<script src="/popper.min.js"></script>
+<script src="/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,105 +1,52 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>编辑支出记录</title>
-    <link rel="stylesheet" href="/bootstrap.min.css">
-    <style>
-        body {
-            background-color: #f8f9fa; /* 轻微的背景色，使界面更柔和 */
-        }
-        .container {
-            padding-top: 40px; /* 增加顶部内边距，让内容更居中 */
-            padding-bottom: 40px; /* 增加底部内边距 */
-        }
-        .card {
-            border: none; /* 移除卡片边框 */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 添加柔和阴影 */
-            border-radius: .5rem; /* 更大的圆角 */
-        }
-        .card-header {
-            background-color: #007bff; /* 主色调背景 */
-            color: white; /* 白色文字 */
-            font-size: 1.5rem; /* 标题字号 */
-            font-weight: 500; /* 字重 */
-            border-bottom: none; /* 移除底部边框 */
-            border-top-left-radius: .5rem; /* 匹配卡片圆角 */
-            border-top-right-radius: .5rem;
-        }
-        .form-group {
-            margin-bottom: 1.5rem; /* 增加表单组之间的垂直间距 */
-        }
-        .form-control {
-            border-radius: .25rem; /* 默认输入框圆角 */
-        }
-        .btn-group-custom {
-            display: flex;
-            flex-wrap: wrap; /* 按钮在小屏幕上换行 */
-            gap: 15px; /* 按钮之间间距 */
-            margin-top: 20px; /* 按钮组上方间距 */
-        }
-        /* For older browsers not fully supporting gap, use margin-right fallback */
-        .btn-group-custom .btn:not(:last-child) {
-            margin-right: 15px; /* Fallback spacing for buttons */
-        }
-        /* Adjust column width for form on different screen sizes */
-        @media (min-width: 576px) { /* Small devices (tablets) */
-            .form-column {
-                max-width: 600px; /* Limit form width on larger screens */
-            }
-        }
-        @media (min-width: 992px) { /* Large devices (desktops) */
-            .form-column {
-                max-width: 700px; /* Further limit form width for very large screens */
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12 col-sm-10 col-md-8 col-lg-6 form-column">
-                <div class="card">
-                    <div class="card-header text-center">
-                        编辑支出记录
-                    </div>
-                    <div class="card-body">
-                        <form action="/expenses/edit/<%= expense._id %>" method="POST">
-                            <div class="form-group">
-                                <label for="description">描述:</label>
-                                <input type="text" class="form-control" id="description" name="description" value="<%= expense.description %>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="amount">金额:</label>
-                                <input type="number" class="form-control" id="amount" name="amount" value="<%= expense.amount %>" step="0.01" min="0" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="category">大类:</label>
-                                <input type="text" class="form-control" id="category" name="category" value="<%= expense.category %>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="subcategory">小类:</label>
-                                <input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= expense.subcategory %>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="date">日期:</label>
-                                <input type="date" class="form-control" id="date" name="date" value="<%= new Date(expense.date).toISOString().slice(0, 10) %>" required>
-                            </div>
-                            
-                            <div class="btn-group-custom">
-                                <button type="submit" class="btn btn-primary">保存</button>
-                                <a href="/expenses" class="btn btn-secondary">取消</a>
-                            </div>
-                        </form>
-                    </div>
+<%#
+  This file is now a content partial that will be inserted into views/expenses/layout.ejs.
+  It no longer needs <html>, <head>, <body>, or direct CSS/JS links.
+  The 'title' variable will be passed from the Express route to layout.ejs.
+%>
+
+<div class="container mt-4 mb-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 form-column">
+            <div class="card shadow-sm"> <%# Added shadow-sm for consistency %>
+                <div class="card-header bg-primary text-white text-center py-3"> <%# Applied layout's btn-primary style for header %>
+                    <h4 class="mb-0">编辑支出记录</h4> <%# Changed to h4 for better hierarchy with page-title %>
+                </div>
+                <div class="card-body p-4"> <%# Added padding for card body %>
+                     <% if (messages && messages.success) { %>
+                        <div class="alert alert-success" role="alert"><%= messages.success %></div>
+                    <% } %>
+                    <% if (messages && messages.error) { %>
+                        <div class="alert alert-danger" role="alert"><%= messages.error %></div>
+                    <% } %>
+                    <form action="/expenses/edit/<%= expense._id %>" method="POST">
+                        <div class="form-group">
+                            <label for="description" class="form-label">描述:</label>
+                            <input type="text" class="form-control" id="description" name="description" value="<%= expense.description %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount" class="form-label">金额:</label>
+                            <input type="number" class="form-control" id="amount" name="amount" value="<%= expense.amount %>" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category" class="form-label">大类:</label>
+                            <input type="text" class="form-control" id="category" name="category" value="<%= expense.category %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subcategory" class="form-label">小类:</label>
+                            <input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= expense.subcategory %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="date" class="form-label">日期:</label>
+                            <input type="date" class="form-control" id="date" name="date" value="<%= new Date(expense.date).toISOString().slice(0, 10) %>" required>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center mt-4"> <%# Using flex utilities for button spacing and alignment %>
+                            <button type="submit" class="btn btn-success mr-2"><i class="fas fa-save mr-2"></i>保存</button> <%# Used layout's btn-success %>
+                            <a href="/expenses" class="btn btn-secondary"><i class="fas fa-times-circle mr-2"></i>取消</a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="/jquery-3.5.1.slim.min.js"></script>
-    <script src="/popper.min.js"></script>
-    <script src="/bootstrap.min.js"></script>
-</body>
-</html>
+</div>

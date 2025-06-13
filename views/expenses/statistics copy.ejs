@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支出统计</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/all.min.css">
+    <link rel="stylesheet" href="/cyrillic-ext.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --light-gray: #f8f9fa;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+            --box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--light-gray);
+            color: #343a40;
+        }
+
+        h1, h2 {
+            color: #212529;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            min-height: 100vh;
+            gap: 20px; /* Space between sidebar and main content */
+        }
+
+        /* Adjust main content area sizing more precisely */
+        .main-content-area {
+            flex-grow: 1;
+            padding-left: 15px;
+            padding-right: 15px;
+            max-width: 100%; /* Ensure it doesn't overflow on small screens */
+        }
+
+        @media (min-width: 576px) { /* Small devices (landscape phones, 576px and up) */
+            .main-content-area {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+
+        @media (min-width: 768px) { /* Medium devices (tablets, 768px and up) */
+            .app-container {
+                padding-top: 30px;
+                padding-bottom: 30px;
+            }
+            .main-content-area {
+                padding-left: 30px;
+                padding-right: 30px;
+            }
+        }
+
+        @media (min-width: 992px) { /* Large devices (desktops, 992px and up) */
+            .app-container {
+                gap: 30px;
+            }
+            .main-content-area { /* Adjust for sidebar width */
+                flex-basis: calc(100% - 250px - 30px); /* 100% - sidebar width - gap */
+                max-width: calc(100% - 250px - 30px);
+            }
+        }
+
+        .filter-form, .statistics-results {
+            background-color: var(--white);
+            padding: 25px;
+            border-radius: .75rem; /* Slightly larger radius */
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            transition: transform var(--transition-speed) ease-in-out, box-shadow var(--transition-speed) ease-in-out;
+        }
+
+        .filter-form:hover, .statistics-results:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .filter-form .form-group {
+            margin-bottom: 1.25rem; /* Slightly more space */
+        }
+
+        .form-control {
+            border-radius: .3rem; /* Match Bootstrap default more closely */
+            border-color: var(--border-color);
+            transition: border-color var(--transition-speed) ease-in-out, box-shadow var(--transition-speed) ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .filter-buttons {
+            margin-top: 20px; /* More space */
+            display: flex;
+            gap: 15px; /* Larger gap for buttons */
+            flex-wrap: wrap;
+            justify-content: flex-start; /* Align to start by default */
+        }
+
+        /* On larger screens, push buttons to the end */
+        @media (min-width: 768px) {
+            .filter-buttons {
+                justify-content: flex-end; /* Align to end on larger screens */
+            }
+        }
+
+        .btn {
+            border-radius: .3rem;
+            padding: 0.6rem 1.2rem; /* Slightly larger buttons */
+            font-size: 1rem;
+            transition: all var(--transition-speed) ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+            border-color: #343a40;
+            transform: translateY(-1px);
+        }
+
+        /* Table styling */
+        .table {
+            margin-bottom: 0; /* Remove default margin */
+            border-collapse: separate; /* For rounded corners on cells */
+            border-spacing: 0;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border-bottom: 2px solid var(--primary-color);
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+
+        .table tbody tr {
+            transition: background-color var(--transition-speed) ease-in-out;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .table tbody td {
+            padding: 12px 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .table-info {
+            background-color: #e2f4ff !important; /* Light blue for total row */
+            color: #0056b3;
+            font-weight: bold;
+        }
+
+        /* Responsive table for small screens */
+        @media (max-width: 767.98px) {
+            .form-row {
+                flex-direction: column; /* Stack form groups vertically */
+            }
+            .form-row .form-group {
+                width: 100%; /* Full width */
+            }
+            .filter-buttons {
+                justify-content: center; /* Center buttons on small screens */
+            }
+
+            .table-responsive thead { display: none; }
+            .table-responsive tbody tr {
+                border: 1px solid var(--border-color);
+                margin-bottom: 15px; /* More space between cards */
+                border-radius: .5rem;
+                overflow: hidden; /* Ensure rounded corners apply */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow for cards */
+            }
+            .table-responsive td {
+                display: flex; /* Use flex for label and value */
+                justify-content: space-between; /* Push label left, value right */
+                align-items: center;
+                border: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 10px 15px;
+                text-align: right;
+            }
+            .table-responsive td:last-child {
+                border-bottom: none; /* No border for the last item in a card */
+            }
+            .table-responsive td:before {
+                content: attr(data-label); /* Use data-label attribute for content */
+                font-weight: 500;
+                color: #555;
+                text-align: left;
+                flex-basis: 45%; /* Give label fixed width */
+                flex-shrink: 0; /* Prevent label from shrinking */
+                padding-right: 10px;
+            }
+
+            /* Assign data-label to each td */
+            .table-responsive tbody td:nth-of-type(1):before { content: "统计类别"; }
+            .table-responsive tbody td:nth-of-type(2):before { content: "总金额"; }
+        }
+
+        /* Chart Styling */
+        .chart-container {
+            background-color: var(--white);
+            padding: 25px;
+            border-radius: .75rem;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            height: 400px; /* Fixed height for chart */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .chart-container canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* No data message */
+        .no-data-message {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .no-data-message i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #adb5bd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid app-container">
+        <%- include('../menu/sidebar.ejs') %>
+        <div class="col-12 col-sm-8 col-md-10 main-content-area">
+            <h1>支出统计 <i class="fas fa-chart-pie"></i></h1>
+
+            <div class="filter-form">
+                <form action="/expenses/statistics" method="GET">
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="startDate"><i class="far fa-calendar-alt"></i> 开始日期:</label>
+                            <input type="date" class="form-control" id="startDate" name="startDate" value="<%= typeof query !== 'undefined' && query.startDate ? query.startDate : '' %>">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="endDate"><i class="far fa-calendar-alt"></i> 结束日期:</label>
+                            <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof query !== 'undefined' && query.endDate ? query.endDate : '' %>">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="category"><i class="fas fa-tags"></i> 大类:</label>
+                            <select class="form-control" id="category" name="category">
+                                <option value="">所有大类</option>
+                                <% distinctCategories.forEach(cat => { %>
+                                    <option value="<%= cat %>" <%= typeof query !== 'undefined' && query.category === cat ? 'selected' : '' %>>
+                                        <%= cat %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="subcategory"><i class="fas fa-tag"></i> 小类:</label>
+                            <select class="form-control" id="subcategory" name="subcategory">
+                                <option value="">所有小类</option>
+                                <% distinctSubcategories.forEach(subcat => { %>
+                                    <option value="<%= subcat %>" <%= typeof query !== 'undefined' && query.subcategory === subcat ? 'selected' : '' %>>
+                                        <%= subcat %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="minAmount"><i class="fas fa-minus-circle"></i> 最小金额:</label>
+                            <input type="number" class="form-control" id="minAmount" name="minAmount" value="<%= typeof query !== 'undefined' && query.minAmount ? query.minAmount : '' %>">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="maxAmount"><i class="fas fa-plus-circle"></i> 最大金额:</label>
+                            <input type="number" class="form-control" id="maxAmount" name="maxAmount" value="<%= typeof query !== 'undefined' && query.maxAmount ? query.maxAmount : '' %>">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="period"><i class="fas fa-chart-bar"></i> 统计方式:</label>
+                            <select id="period" name="period" class="form-control">
+                                <option value="" <%= typeof query !== 'undefined' && query.period === "" ? 'selected' : '' %>>总计</option>
+                                <option value="category" <%= typeof query !== 'undefined' && query.period === "category" ? 'selected' : '' %>>按大类</option>
+                                <option value="subcategory" <%= typeof query !== 'undefined' && query.period === "subcategory" ? 'selected' : '' %>>按小类</option>
+                                <option value="categoryAndSubcategory" <%= typeof query !== 'undefined' && query.period === "categoryAndSubcategory" ? 'selected' : '' %>>按大类和小类</option>
+                                <option value="year" <%= typeof query !== 'undefined' && query.period === "year" ? 'selected' : '' %>>按年</option>
+                                <option value="month" <%= typeof query !== 'undefined' && query.period === "month" ? 'selected' : '' %>>按月</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3" id="yearSelectGroup" style="display: <%= typeof query !== 'undefined' && query.period === 'month' ? 'block' : 'none' %>;">
+                            <label for="year"><i class="fas fa-calendar"></i> 选择年度:</label>
+                            <select id="year" name="year" class="form-control">
+                                <% distinctYears.forEach(year => { %>
+                                    <option value="<%= year %>" <%= typeof query !== 'undefined' && query.year == year ? 'selected' : '' %>>
+                                        <%= year %> 年
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-12 d-flex align-items-end filter-buttons">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> 生成统计</button>
+                            <a href="/expenses/statistics" class="btn btn-secondary"><i class="fas fa-redo"></i> 重置</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <% if (statistics && statistics.length > 0 && query.period !== '') { %>
+                <div class="chart-container">
+                    <h2>统计图表</h2>
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            <% } else if (query.period === 'month' && (!statistics || statistics.length === 0)) { %>
+                <div class="chart-container">
+                    <h2>统计图表</h2>
+                    <div class="no-data-message">
+                        <i class="fas fa-info-circle"></i>
+                        <p>当前年份没有月度支出数据。</p>
+                        <p>请调整筛选条件或选择其他年份。</p>
+                    </div>
+                </div>
+            <% } %>
+
+            <div class="statistics-results">
+                <h2>统计详情 <i class="fas fa-table"></i></h2>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>统计类别</th>
+                                <th>总金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% let totalOverallAmount = 0; %>
+                            <% if (statistics && statistics.length > 0) { %>
+                                <% statistics.forEach(item => { %>
+                                    <tr>
+                                        <% if (query.period === 'categoryAndSubcategory') { %>
+                                            <td data-label="统计类别"><%= item._id.category %> - <%= item._id.subcategory %></td>
+                                        <% } else { %>
+                                            <td data-label="统计类别"><%= item._id %></td>
+                                        <% } %>
+                                        <td data-label="总金额"><%= item.totalAmount.toFixed(2) %></td>
+                                    </tr>
+                                    <% totalOverallAmount += item.totalAmount; %>
+                                <% }); %>
+                                <tr class="table-info font-weight-bold">
+                                    <td data-label="总计:">总计:</td>
+                                    <td data-label="总金额"><%= totalOverallAmount.toFixed(2) %></td>
+                                </tr>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="2" class="no-data-message">
+                                        <i class="fas fa-info-circle"></i>
+                                        <p>没有找到符合条件的统计数据。</p>
+                                        <p>请调整筛选条件或生成统计。</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <a href="/expenses" class="btn btn-secondary mt-4"><i class="fas fa-arrow-left"></i> 返回支出列表</a>
+        </div>
+    </div>
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Using `|| {}` to ensure the object exists even if it's undefined from the server
+            const statisticsData = <%- JSON.stringify(statistics || []) %>;
+            const query = <%- JSON.stringify(query || {}) %>; // 传入整个 query 对象
+            const periodType = query.period || '';
+            const yearSelectGroup = document.getElementById('yearSelectGroup');
+            const periodSelect = document.getElementById('period');
+
+            // 根据统计方式显示/隐藏年份选择框
+            periodSelect.addEventListener('change', function() {
+                if (this.value === 'month') {
+                    yearSelectGroup.style.display = 'block';
+                } else {
+                    yearSelectGroup.style.display = 'none';
+                }
+            });
+
+            // 初始化时根据当前 query 显示/隐藏年份选择框
+            if (periodType === 'month') {
+                yearSelectGroup.style.display = 'block';
+            } else {
+                yearSelectGroup.style.display = 'none';
+            }
+
+
+            // Only render chart if there's data and a specific period type is selected (not '总计')
+            if (statisticsData && statisticsData.length > 0 && periodType !== '') {
+                let labels = statisticsData.map(item => {
+                    if (periodType === 'categoryAndSubcategory') {
+                        // Ensure _id exists and has category/subcategory properties
+                        return `${item._id && item._id.category ? item._id.category : '未知大类'} - ${item._id && item._id.subcategory ? item._id.subcategory : '未知小类'}`;
+                    }
+                    return item._id;
+                });
+                const data = statisticsData.map(item => item.totalAmount);
+                let chartType = 'bar'; // Default to bar chart
+                let titleText = '支出统计';
+                let xAxesTitle = '类别';
+                let yAxesTitle = '金额';
+
+                if (periodType === 'category') {
+                    chartType = 'pie'; // Use pie chart for category
+                    titleText = '支出按大类统计';
+                } else if (periodType === 'subcategory') {
+                    chartType = 'pie'; // Use pie chart for subcategory
+                    titleText = '支出按小类统计';
+                } else if (periodType === 'categoryAndSubcategory') {
+                    chartType = 'bar'; // Bar chart is usually better for combined categories
+                    titleText = '支出按大类和小类统计';
+                    xAxesTitle = '大类 - 小类';
+                } else if (periodType === 'year') {
+                    titleText = '支出按年份统计';
+                    xAxesTitle = '年份';
+                } else if (periodType === 'month') {
+                    chartType = 'line'; // Use line chart for month
+                    titleText = '支出按月份统计 (' + (query.year || '所有') + '年)';
+                    xAxesTitle = '月份';
+                    yAxesTitle = '金额';
+                    // 确保月份标签是正确的顺序
+                    const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+                    // 创建一个包含所有12个月份的对象，初始金额为0
+                    const monthlyData = {};
+                    for (let i = 1; i <= 12; i++) {
+                        monthlyData[String(i)] = 0;
+                    }
+                    // 将后端返回的数据填充到 monthlyData
+                    statisticsData.forEach(item => {
+                        monthlyData[item._id] = item.totalAmount;
+                    });
+                    // 生成排序后的标签和数据
+                    labels = Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b)).map(monthNum => monthNames[parseInt(monthNum) - 1]);
+                    data.length = 0; // 清空旧数据
+                    Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b)).forEach(monthNum => {
+                        data.push(monthlyData[monthNum]);
+                    });
+                }
+
+                const backgroundColors = [
+                    'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+                    'rgba(199, 199, 199, 0.7)', 'rgba(83, 102, 255, 0.7)', 'rgba(201, 203, 207, 0.7)',
+                    'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)'
+                ];
+                const borderColors = [
+                    'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
+                    'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)', 'rgba(201, 203, 207, 1)',
+                    'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'
+                ];
+
+                const ctx = document.getElementById('expenseChart').getContext('2d');
+                new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '总金额',
+                            data: data,
+                            backgroundColor: chartType === 'line' ? 'rgba(0, 123, 255, 0.2)' : backgroundColors.slice(0, labels.length), // Line chart uses fill
+                            borderColor: chartType === 'line' ? 'rgba(0, 123, 255, 1)' : borderColors.slice(0, labels.length),
+                            borderWidth: 1,
+                            fill: chartType === 'line' ? true : false, // Fill area under line for line chart
+                            tension: chartType === 'line' ? 0.4 : 0 // Smooth curve for line chart
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: titleText,
+                                font: {
+                                    size: 18
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (chartType === 'line' || chartType === 'bar') {
+                                            label += context.parsed.y.toFixed(2);
+                                        } else if (chartType === 'pie') {
+                                            const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                                            const percentage = (context.parsed / total * 100).toFixed(1);
+                                            label += context.parsed.toFixed(2) + ' (' + percentage + '%)';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: chartType === 'pie' ? {} : { // No scales for pie chart
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: yAxesTitle
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: xAxesTitle
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
