@@ -29,8 +29,18 @@
                         </div>
                         <div class="form-group">
                             <label for="category" class="form-label">大类:</label>
-                            <input type="text" class="form-control" id="category" name="category" value="<%= expense.category %>" required>
-                        </div>
+                            <select class="form-control" id="category" name="category" required>
+                                <option value="">请选择大类</option>
+                                <%
+                                    const categories = ['衣', '食', '住', '行', '医', '娱', '人情', '其他'];
+                                    categories.forEach(cat => {
+                                %>
+                                    <option value="<%= cat %>" <%= expense.category === cat ? 'selected' : '' %>><%= cat %></option>
+                                <%
+                                    });
+                                %>
+                            </select>
+                        </div>                        
                         <div class="form-group">
                             <label for="subcategory" class="form-label">小类:</label>
                             <input type="text" class="form-control" id="subcategory" name="subcategory" value="<%= expense.subcategory %>" required>

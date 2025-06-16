@@ -9,10 +9,40 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
     app.get('/diary', requireLogin, async (req, res) => {
         try {
             const userId = req.session.userId;
-            const diaries = await Diary.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ date: 'desc' });
-            res.render('diary/index', { diaries: diaries,path: path, __dirname: __dirname, basedir: path.join(__basedir, 'views') });
+            const page = parseInt(req.query.page) || 1; // 当前页码，默认为1
+            const limit = parseInt(req.query.limit) || 10; // 每页显示数量，默认为10
+            const skip = (page - 1) * limit; // 跳过多少条记录
+           // 构建查询条件
+            let query = { userId: new mongoose.Types.ObjectId(userId) };
+            // 获取总记录数
+            const totalDiaries = await Diary.countDocuments(query);
+            const totalPages = Math.ceil(totalDiaries / limit); // 计算总页数                                    
+            //const diaries = await Diary.find({ userId: new mongoose.Types.ObjectId(userId) }).sort({ date: 'desc' });
+            // 获取当前页的日记数据
+            const diaries = await Diary.find(query)
+                                        .sort({ date: 'desc' }) // 按日期降序排列
+                                        .skip(skip)
+                                        .limit(limit)
+                                        .lean(); // 使用 .lean() 提高查询性能            
+            res.render('diary/index', { 
+                activeMenu: 'diary',
+                layout: 'diary/layout.ejs',
+                title: '日记列表',
+                pageTitle: '日记列表',                
+                diaries: diaries,
+                currentPage: page,
+                totalPages: totalPages,
+                limit: limit,
+                success_msg: req.flash('success_msg'), // 传递 flash 消息
+                error_msg: req.flash('error_msg'),                
+                path: path,
+                __dirname: __dirname,
+                basedir: path.join(__basedir, 'views') 
+            });
         } catch (err) {
-            console.error(err);
+            //console.error(err);
+            console.error("Error fetching diary list with pagination:", err);
+            req.flash('error_msg', '获取日记列表失败。');            
             res.status(500).send('Server Error');
         }
     });
@@ -20,7 +50,17 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
     app.get('/diary/view/:id', requireLogin, async (req, res) => {
         try {
             const diary = await Diary.findById(req.params.id);
-            res.render('diary/view', { diary: diary ,path: path, __dirname: __dirname, basedir: path.join(__basedir,'views')});
+            res.render('diary/view', { 
+                activeMenu: 'diary',
+                layout: 'diary/layout.ejs',
+                title: '查看日记',
+                pageTitle: '查看日记',  
+                success_msg: req.flash('success_msg'), // 传递 flash 消息
+                error_msg: req.flash('error_msg'),                  
+                diary: diary ,
+                path: path, __dirname: __dirname,
+                basedir: path.join(__basedir,'views')
+            });
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');
@@ -28,7 +68,14 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
     });
     // 日记添加页面
     app.get('/diary/add', requireLogin, (req, res) => {
-        res.render('diary/add');
+        res.render('diary/add',{
+            activeMenu: 'diary',
+            layout: 'diary/layout.ejs',
+            title: '新增日记',
+            pageTitle: '新增日记',  
+            success_msg: req.flash('success_msg'), // 传递 flash 消息
+            error_msg: req.flash('error_msg'),            
+        });
     });
 
     // 添加日记
@@ -74,7 +121,18 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
     app.get('/diary/edit/:id', requireLogin, async (req, res) => {
         try {
             const diary = await Diary.findById(req.params.id);
-            res.render('diary/edit', { diary: diary,path: path, __dirname: __dirname, basedir: path.join(__dirname, 'views') });
+            res.render('diary/edit', {
+                activeMenu: 'diary',
+                layout: 'diary/layout.ejs',
+                title: '编辑日记',
+                pageTitle: '编辑日记',  
+                success_msg: req.flash('success_msg'), // 传递 flash 消息
+                error_msg: req.flash('error_msg'),                  
+                diary: diary,
+                path: path,
+                __dirname: __dirname,
+                basedir: path.join(__dirname, 'views') 
+            });
         } catch (err) {
             console.error(err);
             res.status(500).send('Server Error');
@@ -400,6 +458,12 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
 
 
             res.render('diary/statistics', {
+                activeMenu: 'diary',
+                layout: 'diary/layout.ejs',
+                title: '日记统计',
+                pageTitle: '日记统计',  
+                success_msg: req.flash('success_msg'), // 传递 flash 消息
+                error_msg: req.flash('error_msg'),                 
                 statistics: formattedStatistics,
                 startDate: startDate || '',
                 endDate: endDate || '',
@@ -413,7 +477,7 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
                 allWeathers: allWeathers.filter(w => w), // 过滤空值
                 allLocations: allLocations.filter(l => l), // 过滤空值
                 allTags: allTags.filter(t => t), // 过滤空值
-                activeMenu: 'diaryStatistics', // 用于侧边栏高亮
+                //activeMenu: 'diaryStatistics', // 用于侧边栏高亮
                 path: path,
                 __dirname: __dirname,
                 basedir: path.join(__dirname, 'views')

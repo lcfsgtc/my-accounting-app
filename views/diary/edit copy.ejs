@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑日记</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa; /* 轻微的背景色，使界面更柔和 */
+        }
+        .container {
+            padding-top: 40px; /* 增加顶部内边距，让内容更居中 */
+            padding-bottom: 40px; /* 增加底部内边距 */
+        }
+        .card {
+            border: none; /* 移除卡片边框 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* 添加柔和阴影 */
+            border-radius: .5rem; /* 更大的圆角 */
+        }
+        .card-header {
+            background-color: #007bff; /* 主色调背景 */
+            color: white; /* 白色文字 */
+            font-size: 1.5rem; /* 标题字号 */
+            font-weight: 500; /* 字重 */
+            border-bottom: none; /* 移除底部边框 */
+            border-top-left-radius: .5rem; /* 匹配卡片圆角 */
+            border-top-right-radius: .5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem; /* 增加表单组之间的垂直间距 */
+        }
+        .form-control {
+            border-radius: .25rem; /* 默认输入框圆角 */
+        }
+        .btn-group-custom {
+            display: flex;
+            flex-wrap: wrap; /* 按钮在小屏幕上换行 */
+            gap: 15px; /* 按钮之间间距 */
+            margin-top: 20px; /* 按钮组上方间距 */
+        }
+        /* For older browsers not fully supporting gap, use margin-right fallback */
+        .btn-group-custom .btn:not(:last-child) {
+            margin-right: 15px; /* Fallback spacing for buttons */
+        }
+        /* Adjust column width for form on different screen sizes */
+        @media (min-width: 576px) { /* Small devices (tablets) */
+            .form-column {
+                max-width: 600px; /* Limit form width on larger screens */
+            }
+        }
+        @media (min-width: 992px) { /* Large devices (desktops) */
+            .form-column {
+                max-width: 700px; /* Further limit form width for very large screens */
+            }
+        }
+
+        /* --- Image Preview Specific Styles --- */
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap; /* 允许多张图片换行 */
+            gap: 15px; /* 图片之间的间距 */
+            margin-top: 10px;
+        }
+        .image-item {
+            text-align: center;
+            border: 1px solid #dee2e6; /* 边框 */
+            border-radius: .25rem;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            /* Make image items responsive in a grid-like fashion */
+            flex: 1 1 calc(33.333% - 15px); /* Default to 3 images per row on larger screens */
+            max-width: calc(33.333% - 15px);
+        }
+        .image-preview {
+            max-width: 100%; /* 图片自适应容器宽度 */
+            height: auto; /* 保持图片比例 */
+            max-height: 150px; /* 限制最大高度 */
+            display: block; /* 移除图片底部空白 */
+            margin: 0 auto 10px auto; /* 居中并下方留白 */
+            border-radius: .25rem;
+        }
+        /* Responsive adjustments for image items */
+        @media (max-width: 767.98px) { /* On small screens (mobile) */
+            .image-item {
+                flex: 1 1 calc(50% - 15px); /* 2 images per row */
+                max-width: calc(50% - 15px);
+            }
+        }
+        @media (max-width: 575.98px) { /* On extra small screens (very narrow mobile) */
+            .image-item {
+                flex: 1 1 100%; /* 1 image per row */
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 form-column">
+                <div class="card">
+                    <div class="card-header text-center">
+                        编辑日记
+                    </div>
+                    <div class="card-body">
+                        <form action="/diary/edit/<%= diary._id %>" method="POST" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="date">日期:</label>
+                                <input type="date" class="form-control" id="date" name="date" value="<%= new Date(diary.date).toISOString().slice(0, 10) %>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="title">标题:</label>
+                                <input type="text" class="form-control" id="title" name="title" value="<%= diary.title %>" required> </div>
+                            <!--div class="form-group">
+                                <label for="weather">天气:</label>
+                                <input type="text" class="form-control" id="weather" name="weather" value="<%= diary.weather %>">
+                            </div-->
+                            <div class="form-group">
+                                <label for="weather">天气:</label>
+                                <select class="form-control" id="weather" name="weather">
+                                    <option value="" <%= diary.weather === '' ? 'selected' : '' %>>请选择</option>
+                                    <option value="晴" <%= diary.weather === "晴" ? 'selected' : '' %>>晴</option>
+                                    <option value="多云" <%= diary.weather === "多云" ? 'selected' : '' %>>多云</option>
+                                    <option value="阴" <%= diary.weather === "阴" ? 'selected' : '' %>>阴</option>
+                                    <option value="雨" <%= diary.weather === "雨" ? 'selected' : '' %>>雨</option>
+                                    <option value="雪" <%= diary.weather === "雪" ? 'selected' : '' %>>雪</option>
+                                    <option value="风" <%= diary.weather === "风" ? 'selected' : '' %>>风</option>
+                                    <option value="雾" <%= diary.weather === "雾" ? 'selected' : '' %>>雾</option>
+                                    <option value="其他" <%= diary.weather === "其他" ? 'selected' : '' %>>其他</option>
+                                </select>
+                            </div>    
+                            <div class="form-group">
+                                <label for="mood">心情:</label>
+                                <select class="form-control" id="mood" name="mood">
+                                    <option value="" <%= !diary.mood ? 'selected' : '' %>>请选择</option>
+                                    <option value="快乐" <%= diary.mood === "快乐" ? 'selected' : '' %>>快乐</option>
+                                    <option value="悲伤" <%= diary.mood === "悲伤" ? 'selected' : '' %>>悲伤</option>
+                                    <option value="平静" <%= diary.mood === "平静" ? 'selected' : '' %>>平静</option>
+                                    <option value="激动" <%= diary.mood === "激动" ? 'selected' : '' %>>激动</option>
+                                    <option value="沮丧" <%= diary.mood === "沮丧" ? 'selected' : '' %>>沮丧</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="location">地点:</label>
+                                <input type="text" class="form-control" id="location" name="location" value="<%=diary.location%>">
+                            </div>
+                            <div class="form-group">
+                                <label for="people">人物:(使用 英文 逗号 , 分割)</label>
+                                <input type="text" class="form-control" id="people" name="people" value="<%= Array.isArray(diary.people) ? diary.people.join(', ') : diary.people %>">
+                            </div>
+                            <div class="form-group">
+                                <label for="tags">标签:(使用 英文 逗号 , 分割)</label>
+                                <input type="text" class="form-control" id="tags" name="tags" value="<%= Array.isArray(diary.tags) ? diary.tags.join(', ') : diary.tags %>">
+                            </div>
+                            <div class="form-group">
+                                <label for="planList">计划列表:(一行一项)</label>
+                                <textarea class="form-control" id="planList" name="planList" rows="3"><%= Array.isArray(diary.planList) ? diary.planList.join('\n') : diary.planList %></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="eventList">事件列表:(一行一项)</label>
+                                <textarea class="form-control" id="eventList" name="eventList" rows="3"><%= Array.isArray(diary.eventList) ? diary.eventList.join('\n') : diary.eventList %></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="feeling">心情随笔:</label>
+                                <textarea class="form-control" id="feeling" name="feeling" rows="3"><%= diary.feeling %></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="summary">每日总结:</label>
+                                <textarea class="form-control" id="summary" name="summary" rows="3" ><%= diary.summary %></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>现有图片:</label>
+                                <% if (diary.imageUrls && diary.imageUrls.length > 0) { %>
+                                    <div class="image-preview-container">
+                                        <% diary.imageUrls.forEach(function(imageUrl, index) { %>
+                                            <div class="image-item">
+                                                <img src="<%= imageUrl %>" alt="图片 <%= index + 1 %>" class="image-preview img-fluid">
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="deleteImage<%= index %>" name="deleteImages" value="<%= imageUrl %>">
+                                                    <label class="form-check-label" for="deleteImage<%= index %>">删除这张图片</label>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } else { %>
+                                    <p class="text-muted">没有图片</p>
+                                <% } %>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="newImages">上传新图片:</label>
+                                <input type="file" class="form-control-file" id="newImages" name="newImages" multiple accept="image/*">
+                            </div>
+                            
+                            <div class="form-group form-check">
+                                <input type="checkbox" class="form-check-input" id="isPublic" name="isPublic" <%= diary.isPublic ? 'checked' : '' %>>
+                                <label class="form-check-label" for="isPublic">公开日记</label>
+                            </div>
+                            
+                            <div class="btn-group-custom">
+                                <button type="submit" class="btn btn-primary">保存</button>
+                                <a href="/diary" class="btn btn-secondary">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
+</body>
+</html>

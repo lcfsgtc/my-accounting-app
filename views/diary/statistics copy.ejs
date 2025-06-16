@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日记统计</title>
+    <link rel="stylesheet" href="/bootstrap.min.css">
+    <link rel="stylesheet" href="/all.min.css">
+    <style>
+        /* 全局布局样式：确保侧边栏和主内容正确布局 */
+        body {
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden; /* 防止水平滚动 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            background-color: #f8f9fa; /* 轻微的背景色 */
+        }
+        .content {
+            flex-grow: 1; /* 主内容区域占据剩余空间 */
+            padding: 1.5rem; /* 增加内边距 */
+            background-color: #ffffff; /* 内容区背景色 */
+            border-radius: .375rem; /* 轻微圆角 */
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* 轻微阴影 */
+            margin: 1.5rem; /* 整体外边距，使其不紧贴屏幕边缘 */
+        }
+
+        /* 统一表单元素样式 (Bootstrap 4 兼容) */
+        .form-group label { /* Bootstrap 4 的 label 通常在 .form-group 内 */
+            font-weight: 600;
+            margin-bottom: .5rem;
+            color: #495057;
+        }
+        .form-control { /* Bootstrap 4 的 select 也是 form-control */
+            border-radius: .25rem;
+            border: 1px solid #ced4da;
+            padding: .6rem .75rem; /* 稍微增加内填充 */
+            font-size: .9rem;
+        }
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .btn {
+            border-radius: .25rem;
+            font-size: .9rem;
+            padding: .6rem 1rem;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        /* 表格样式 */
+        .table {
+            margin-bottom: 1rem;
+            border-collapse: separate; /* 允许圆角边框 */
+            border-spacing: 0;
+            border-radius: .375rem; /* 表格整体圆角 */
+            overflow: hidden; /* 隐藏超出圆角的内容 */
+        }
+        .table thead th {
+            background-color: #343a40; /* 深色表头 */
+            color: #fff;
+            border-bottom: 2px solid #dee2e6;
+            padding: .75rem 1rem;
+            vertical-align: bottom;
+            font-weight: 600;
+        }
+        .table tbody tr {
+            transition: background-color 0.15s ease-in-out;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, .03); /* 更浅的条纹 */
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, .06); /* 鼠标悬停效果增强 */
+        }
+        .table td {
+            padding: .75rem 1rem;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+        }
+        .table-responsive {
+            border-radius: .375rem; /* 响应式表格的圆角 */
+            overflow-x: auto; /* 确保小屏幕下可滚动 */
+        }
+
+        /* 标题和分隔线 */
+        h1, h2 {
+            color: #343a40;
+            margin-bottom: 1rem;
+        }
+        hr {
+            border-top: 1px solid rgba(0, 0, 0, .1);
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 响应式表单布局调整 (Bootstrap 4 兼容) */
+        @media (max-width: 767.98px) {
+            .content {
+                margin: 1rem; /* 小屏幕下调整外边距 */
+            }
+            .form-row > [class*="col-"] {
+                margin-bottom: 1rem; /* 为每个表单项增加底部间距 */
+            }
+            .form-row > [class*="col-"]:last-child {
+                margin-bottom: 0; /* 最后一个表单项不需要底部间距 */
+            }
+            /* 按钮在小屏幕上占满宽度 */
+            .col-12 button.btn {
+                width: 100%;
+            }
+        }
+        /* 移动端汉堡菜单按钮位置 */
+        .navbar-toggler {
+            margin-bottom: 1rem;
+            margin-left: 0; /* 确保在内容区左侧 */
+        }
+
+        /* Card-like display for statistics results on small screens */
+        .statistics-card {
+            background-color: #fff;
+            border-radius: .375rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .statistics-card h5 {
+            color: #343a40;
+            margin-bottom: .75rem;
+            font-weight: 600;
+        }
+        .statistics-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .statistics-card ul li {
+            padding: .25rem 0;
+            color: #555;
+            border-bottom: 1px solid #eee;
+        }
+        .statistics-card ul li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../menu/sidebar.ejs') %>
+
+    <div class="content">
+        <button class="navbar-toggler d-md-none mb-3 btn btn-outline-secondary" type="button" data-toggle="collapse" data-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span> 菜单
+        </button>
+        <h1 class="mb-4">日记统计</h1>
+        <a href="/diary" class="btn btn-secondary mb-4">
+            <i class="fas fa-arrow-left me-2"></i>返回日记列表
+        </a>
+        <hr>
+        <form action="/diary/statistics" method="GET" class="mb-4">
+            <div class="form-row"> <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="startDate">开始日期:</label>
+                    <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate || '' %>">
+                </div>
+                <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="endDate">结束日期:</label>
+                    <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate || '' %>">
+                </div>
+                <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="mood">心情:</label>
+                    <select class="form-control" id="mood" name="mood">
+                        <option value="">所有心情</option>
+                        <% allMoods.forEach(m => { %>
+                            <option value="<%= m %>" <%= mood === m ? 'selected' : '' %>><%= m %></option>
+                        <% }); %>
+                        </select>
+                </div>
+                <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="weather">天气:</label>
+                    <select class="form-control" id="weather" name="weather">
+                        <option value="">所有天气</option>
+                        <% allWeathers.forEach(w => { %>
+                            <option value="<%= w %>" <%= weather === w ? 'selected' : '' %>><%= w %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="location">地点:</label>
+                    <select class="form-control" id="location" name="location">
+                        <option value="">所有地点</option>
+                        <% allLocations.forEach(loc => { %>
+                            <option value="<%= loc %>" <%= location === loc ? 'selected' : '' %>><%= loc %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="tags">标签 (逗号分隔):</label>
+                    <input type="text" class="form-control" id="tags" name="tags" value="<%= tags || '' %>" placeholder="例如：生活,工作">
+                </div>
+                <div class="form-group col-12 col-md-3 col-lg-2">
+                    <label for="period">统计时间:</label>
+                    <select id="period" name="period" class="form-control">
+                        <option value="" <%= period === "" ? 'selected' : '' %>>总计</option>
+                        <option value="year" <%= period === "year" ? 'selected' : '' %>>按年</option>
+                        <option value="month" <%= period === "month" ? 'selected' : '' %>>按月</option>
+                        <option value="day" <%= period === "day" ? 'selected' : '' %>>按日</option>
+                    </select>
+                </div>
+                 <div class="form-group col-12 col-md-3 col-lg-2 d-flex align-items-end">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="publicOnly" name="publicOnly" <%= publicOnly ? 'checked' : '' %>>
+                        <label class="form-check-label" for="publicOnly">仅公开日记</label>
+                    </div>
+                </div>
+                <div class="col-12 col-md-3 col-lg-2 d-flex align-items-end mt-sm-3 mt-md-0">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-chart-bar me-2"></i>生成统计
+                    </button>
+                </div>
+            </div>
+        </form>
+        <hr>
+        <h2>统计结果</h2>
+        
+        <% if (statistics && statistics.length > 0) { %>
+            <% if (period === '' || period === undefined) { %>
+                <div class="table-responsive d-none d-md-block"> <table class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>统计项</th>
+                                <th>值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>总日记数</td>
+                                <td><%= statistics[0].totalDiaries || 0 %></td>
+                            </tr>
+                            <tr>
+                                <td>心情分布</td>
+                                <td>
+                                    <% if (statistics[0].moodDistribution && statistics[0].moodDistribution.length > 0) { %>
+                                        <% statistics[0].moodDistribution.forEach((m, index) => { %>
+                                            <%= m.mood %> (<%= m.count %>次)<%= index < statistics[0].moodDistribution.length - 1 ? ', ' : '' %>
+                                        <% }); %>
+                                    <% } else { %>
+                                        无
+                                    <% } %>
+                                </td>
+                            </tr>
+                             <tr>
+                                <td>天气分布</td>
+                                <td>
+                                    <% if (statistics[0].weatherDistribution && statistics[0].weatherDistribution.length > 0) { %>
+                                        <% statistics[0].weatherDistribution.forEach((w, index) => { %>
+                                            <%= w.weather %> (<%= w.count %>次)<%= index < statistics[0].weatherDistribution.length - 1 ? ', ' : '' %>
+                                        <% }); %>
+                                    <% } else { %>
+                                        无
+                                    <% } %>
+                                </td>
+                            </tr>
+                             <tr>
+                                <td>地点分布</td>
+                                <td>
+                                    <% if (statistics[0].locationDistribution && statistics[0].locationDistribution.length > 0) { %>
+                                        <% statistics[0].locationDistribution.forEach((loc, index) => { %>
+                                            <%= loc.location %> (<%= loc.count %>次)<%= index < statistics[0].locationDistribution.length - 1 ? ', ' : '' %>
+                                        <% }); %>
+                                    <% } else { %>
+                                        无
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>常用标签</td>
+                                <td>
+                                    <% if (statistics[0].tagDistribution && statistics[0].tagDistribution.length > 0) { %>
+                                        <% statistics[0].tagDistribution.sort((a, b) => b.count - a.count).forEach((t, index) => { %>
+                                            #<%= t.tag %> (<%= t.count %>次)<%= index < statistics[0].tagDistribution.length - 1 ? ', ' : '' %>
+                                        <% }); %>
+                                    <% } else { %>
+                                        无
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-md-none"> <div class="statistics-card">
+                        <h5>基本统计</h5>
+                        <ul>
+                            <li><strong>总日记数:</strong> <%= statistics[0].totalDiaries || 0 %></li>
+                            <li><strong>心情分布:</strong> 
+                                <% if (statistics[0].moodDistribution && statistics[0].moodDistribution.length > 0) { %>
+                                    <% statistics[0].moodDistribution.forEach((m, index) => { %>
+                                        <%= m.mood %> (<%= m.count %>次)<%= index < statistics[0].moodDistribution.length - 1 ? ', ' : '' %>
+                                    <% }); %>
+                                <% } else { %>
+                                    无
+                                <% } %>
+                            </li>
+                            <li><strong>天气分布:</strong> 
+                                <% if (statistics[0].weatherDistribution && statistics[0].weatherDistribution.length > 0) { %>
+                                    <% statistics[0].weatherDistribution.forEach((w, index) => { %>
+                                        <%= w.weather %> (<%= w.count %>次)<%= index < statistics[0].weatherDistribution.length - 1 ? ', ' : '' %>
+                                    <% }); %>
+                                <% } else { %>
+                                    无
+                                <% } %>
+                            </li>
+                            <li><strong>地点分布:</strong> 
+                                <% if (statistics[0].locationDistribution && statistics[0].locationDistribution.length > 0) { %>
+                                    <% statistics[0].locationDistribution.forEach((loc, index) => { %>
+                                        <%= loc.location %> (<%= loc.count %>次)<%= index < statistics[0].locationDistribution.length - 1 ? ', ' : '' %>
+                                    <% }); %>
+                                <% } else { %>
+                                    无
+                                <% } %>
+                            </li>
+                            <li><strong>常用标签:</strong> 
+                                <% if (statistics[0].tagDistribution && statistics[0].tagDistribution.length > 0) { %>
+                                    <% statistics[0].tagDistribution.sort((a, b) => b.count - a.count).forEach((t, index) => { %>
+                                        #<%= t.tag %> (<%= t.count %>次)<%= index < statistics[0].tagDistribution.length - 1 ? ', ' : '' %>
+                                    <% }); %>
+                                <% } else { %>
+                                    无
+                                <% } %>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>时间维度</th>
+                                <th>总日记数</th>
+                                <th>心情分布</th>
+                                <th>天气分布</th>
+                                <th>地点分布</th>
+                                <th>涉及标签</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% statistics.forEach(item => { %>
+                                <tr>
+                                    <td>
+                                        <% // 显示时间维度 %>
+                                        <% if (period === 'year' && item._id && item._id.year) { %>
+                                            <%= item._id.year %>年
+                                        <% } else if (period === 'month' && item._id && item._id.year && item._id.month) { %>
+                                            <%= item._id.year %>年<%= String(item._id.month).padStart(2, '0') %>月
+                                        <% } else if (period === 'day' && item._id && item._id.year && item._id.month && item._id.day) { %>
+                                            <%= item._id.year %>年<%= String(item._id.month).padStart(2, '0') %>月<%= String(item._id.day).padStart(2, '0') %>日
+                                        <% } else { %>
+                                            未知时间
+                                        <% } %>
+                                    </td>
+                                    <td><%= item.totalDiaries || 0 %></td>
+                                    <td>
+                                        <% if (item.moodDistribution && item.moodDistribution.length > 0) { %>
+                                            <% item.moodDistribution.forEach((m, index) => { %>
+                                                <%= m.mood %> (<%= m.count %>次)<%= index < item.moodDistribution.length - 1 ? ', ' : '' %>
+                                            <% }); %>
+                                        <% } else { %>
+                                            无
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (item.weatherDistribution && item.weatherDistribution.length > 0) { %>
+                                            <% item.weatherDistribution.forEach((w, index) => { %>
+                                                <%= w.weather %> (<%= w.count %>次)<%= index < item.weatherDistribution.length - 1 ? ', ' : '' %>
+                                            <% }); %>
+                                        <% } else { %>
+                                            无
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (item.locationDistribution && item.locationDistribution.length > 0) { %>
+                                            <% item.locationDistribution.forEach((loc, index) => { %>
+                                                <%= loc.location %> (<%= loc.count %>次)<%= index < item.locationDistribution.length - 1 ? ', ' : '' %>
+                                            <% }); %>
+                                        <% } else { %>
+                                            无
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (item.tagDistribution && item.tagDistribution.length > 0) { %>
+                                            <% item.tagDistribution.sort((a, b) => b.count - a.count).forEach((t, index) => { %>
+                                                #<%= t.tag %> (<%= t.count %>次)<%= index < item.tagDistribution.length - 1 ? ', ' : '' %>
+                                            <% }); %>
+                                        <% } else { %>
+                                            无
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        <% } else { %>
+            <p class="text-center text-muted py-4">没有符合条件的统计数据。</p>
+        <% } %>
+    </div>
+
+    <script src="/jquery-3.5.1.slim.min.js"></script>
+    <script src="/popper.min.js"></script>
+    <script src="/bootstrap.min.js"></script>
+</body>
+</html>

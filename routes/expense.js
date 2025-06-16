@@ -73,7 +73,7 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
             if (subcategory) {
                 query.subcategory = subcategory;
             }
-
+            const allCategories = ['衣', '食', '住', '行', '医', '娱', '人情', '其他'];
             // 获取总支出数量 (用于计算总页数)
             const totalExpenses = await Expense.countDocuments(query);
             const totalPages = Math.ceil(totalExpenses / limit); // 计算总页数
@@ -89,10 +89,22 @@ module.exports = (app, Expense, requireLogin,mongoose, path, querystring, Parser
             delete currentQuery.page;
             delete currentQuery.limit;
             const queryString = querystring.encode(currentQuery); 
-            
+            /*const queryString = Object.entries(req.query)
+                .filter(([key]) => !['page', 'limit'].includes(key))
+                .map(([key, value]) => `${key}=${value}`)
+                .join('&'); */           
             // 获取所有不重复的类别和子类别，用于筛选下拉菜单
-            const distinctCategories = await Expense.distinct('category', { userId: userId });
-            const distinctSubcategories = await Expense.distinct('subcategory', { userId: userId });
+            const distinctDbCategories = await Expense.distinct('category', { userId: userId });
+            const distinctCategories = Array.from(new Set([...allCategories, ...distinctDbCategories]));            
+            let distinctSubcategories = [];
+            if (category) {
+                distinctSubcategories = await Expense.distinct('subcategory', { userId, category: category });
+            } else {
+                distinctSubcategories = await Expense.distinct('subcategory', { userId });
+            }            
+            
+            
+            //const distinctSubcategories = await Expense.distinct('subcategory', { userId: userId });
 
             res.render('expenses/index', {              
                 activeMenu: 'expenses',

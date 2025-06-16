@@ -12,6 +12,7 @@
         </div>
         <div class="col-md-4 col-lg-3">
             <label for="type" class="form-label">类型:</label>
+            <%# Changed to select dropdown for better user experience based on distinct types %>
             <select class="form-select" id="type" name="type">
                 <option value="">所有类型</option>
                 <% if (distinctTypes && distinctTypes.length > 0) { %>
@@ -21,17 +22,9 @@
                 <% } %>
             </select>
         </div>
-        <%# Removed 'limit' from here, it will be at the bottom %>
         <div class="col-12 col-md-auto d-flex align-items-end mt-sm-0 mt-3">
             <button type="submit" class="btn btn-primary me-2"><i class="fas fa-filter"></i> 筛选</button>
-            <%
-                // 构建导出链接的查询字符串，不包含 page 和 limit
-                const exportQuery = { ...query };
-                delete exportQuery.page;
-                delete exportQuery.limit;
-                const exportQueryString = Object.keys(exportQuery).length > 0 ? new URLSearchParams(exportQuery).toString() : '';
-            %>
-            <a href="/assets/export<%= exportQueryString ? '?' + exportQueryString : ''%>" class="btn btn-secondary"><i class="fas fa-file-export"></i> 导出</a>
+            <a href="/assets/export<%=queryString ? '?' + queryString : ''%>" class="btn btn-secondary"><i class="fas fa-file-export"></i> 导出</a>
         </div>
     </div>
 </form>
@@ -39,7 +32,10 @@
 <div class="d-flex justify-content-start flex-wrap gap-2 mb-4">
     <a href="/assets/add" class="btn btn-success"><i class="fas fa-plus-circle"></i> 添加资产</a>
     <a href="/assets/statistics" class="btn btn-info"><i class="fas fa-chart-bar"></i> 资产统计</a>
-    <a href="/assets/export<%=queryString%>" class="btn btn-secondary">导出</a>
+    <%# Added import button and modal trigger %>
+    <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="fas fa-file-import"></i> 导入资产
+    </button>
 </div>
 
 <hr>
@@ -73,7 +69,7 @@
                         <td class="text-nowrap">
                             <a href="/assets/edit/<%= asset._id %>" class="btn btn-sm btn-warning me-1"><i class="fas fa-edit"></i> 编辑</a>
                             <form action="/assets/delete/<%= asset._id %>" method="POST" style="display: inline;" onsubmit="return confirm('确定要删除吗？')">
-                                <input type="hidden" name="_method" value="DELETE">
+                                <input type="hidden" name="_method" value="DELETE"> <%# Add method override for DELETE %>
                                 <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i> 删除</button>
                             </form>
                         </td>
@@ -88,50 +84,37 @@
     </table>
 </div>
 
-<%# Pagination and Items per page control - Adjusted position and layout %>
-<% if (totalPages > 0) { %> <%# Show controls if there's at least one page %>
-    <div class="d-flex flex-wrap justify-content-center justify-content-md-between align-items-center mt-4 p-3 border rounded" style="background-color: #e9ecef;"> <%# Simulate red box area with light background and border %>
-        <%
-            // Re-construct queryString for pagination links
-            const pageQuery = { ...query };
-            delete pageQuery.page; // Ensures 'page' is dynamically set by the link
-            delete pageQuery.limit; // Ensures 'limit' is dynamically set by the dropdown or link
-            const pageQueryString = Object.keys(pageQuery).length > 0 ? '&' + new URLSearchParams(pageQuery).toString() : '';
-        %>
+<%# Pagination Controls %>
+<% if (totalPages > 1) { %>
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="/assets?page=<%= currentPage - 1 %>&limit=<%= limit %><%= queryString ? '&' + queryString : '' %>" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            <% 
+            const maxPagesToShow = 5; // Adjust as needed
+            let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+            let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-        <nav aria-label="Page navigation" class="mb-2 mb-md-0"> <%# Added margin for small screens %>
-            <ul class="pagination pagination-sm mb-0"> <%# Use pagination-sm for smaller buttons %>
-                <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-                    <a class="page-link" href="/assets?page=<%= currentPage - 1 %>&limit=<%= limit %><%= pageQueryString %>" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
+            if (endPage - startPage + 1 < maxPagesToShow) {
+                startPage = Math.max(1, endPage - maxPagesToShow + 1);
+            }
+            %>
+            <% for (let i = startPage; i <= endPage; i++) { %>
+                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                    <a class="page-link" href="/assets?page=<%= i %>&limit=<%= limit %><%= queryString ? '&' + queryString : '' %>"><%= i %></a>
                 </li>
-                <% for (let i = 1; i <= totalPages; i++) { %>
-                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                        <a class="page-link" href="/assets?page=<%= i %>&limit=<%= limit %><%= pageQueryString %>"><%= i %></a>
-                    </li>
-                <% } %>
-                <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-                    <a class="page-link" href="/assets?page=<%= currentPage + 1 %>&limit=<%= limit %><%= pageQueryString %>" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <div class="d-flex align-items-center">
-            <span class="me-2 text-nowrap">每页显示:</span>
-            <select class="form-select form-select-sm" id="limitBottom" onchange="window.location.href='/assets?page=1&limit=' + this.value + '<%= pageQueryString %>'">
-                <option value="5" <%= limit == 5 ? 'selected' : '' %>>5</option>
-                <option value="10" <%= limit == 10 ? 'selected' : '' %>>10</option>
-                <option value="20" <%= limit == 20 ? 'selected' : '' %>>20</option>
-                <option value="50" <%= limit == 50 ? 'selected' : '' %>>50</option>
-            </select>
-            <span class="ms-3 text-nowrap">总共 <%= totalAssets %> 条记录</span> <%# Display total records %>
-        </div>
-    </div>
+            <% } %>
+            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                <a class="page-link" href="/assets?page=<%= currentPage + 1 %>&limit=<%= limit %><%= queryString ? '&' + queryString : '' %>" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 <% } %>
-
 
 <div class="mt-4 card shadow-sm">
     <div class="card-header bg-light">

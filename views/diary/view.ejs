@@ -1,32 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>查看日记</title>
-    <!--link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"-->
-    <link rel="stylesheet" href="/bootstrap.min.css">    
-    <style>
-        body {
-            padding-top: 20px;
-        }
-        .diary-content {
-          margin-top: 20px;
-        }
-        .image-list {
-            margin-top: 20px;
-        }
-        .image-list img {
-            max-width: 200px;
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
 <div class="container">
     <h1>查看日记</h1>
     <a href="/diary" class="btn btn-secondary">返回日记列表</a>
     <hr>
     <h2><%= diary.title %></h2>
-    <p>日期：<%= new Date(diary.date).toLocaleDateString() %></p>
+    <p>日期：<%= new Date(diary.date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) %></p>
     <% if (diary.weather) { %>
         <p>天气：<%= diary.weather %></p>
     <% } %>
@@ -36,42 +13,60 @@
     <% if (diary.location) { %>
         <p>地点：<%= diary.location %></p>
     <% } %>
-     <% if (diary.people) { %>
-        <p>人物：<%= diary.people %></p>
+    <% if (diary.people && diary.people.length > 0) { %>
+        <p>人物：<%= Array.isArray(diary.people) ? diary.people.join(', ') : diary.people %></p>
     <% } %>
-    <% if (diary.tags) { %>
-        <p>标签：<%= diary.tags %></p>
+    <% if (diary.tags && diary.tags.length > 0) { %>
+        <p>标签：<%= Array.isArray(diary.tags) ? diary.tags.join(', ') : diary.tags %></p>
     <% } %>
     <div class="diary-content">
         <h3>计划列表:</h3>
-        <ul>
-            <% diary.planList.forEach(plan => { %>
-                <li><%= plan %></li>
-            <% }); %>
-        </ul>
+        <% if (diary.planList && diary.planList.length > 0) { %>
+            <ul>
+                <% diary.planList.forEach(plan => { %>
+                    <li><%= plan %></li>
+                <% }); %>
+            </ul>
+        <% } else { %>
+            <p class="text-muted">无计划</p>
+        <% } %>
 
         <h3>事件列表:</h3>
-        <ul>
-            <% diary.eventList.forEach(event => { %>
-                <li><%= event %></li>
-            <% }); %>
-        </ul>
+        <% if (diary.eventList && diary.eventList.length > 0) { %>
+            <ul>
+                <% diary.eventList.forEach(event => { %>
+                    <li><%= event %></li>
+                <% }); %>
+            </ul>
+        <% } else { %>
+            <p class="text-muted">无事件</p>
+        <% } %>
 
         <h3>心情随笔:</h3>
-        <%= diary.feeling %>
+        <% if (diary.feeling) { %>
+            <p><%= diary.feeling %></p>
+        <% } else { %>
+            <p class="text-muted">无心情随笔</p>
+        <% } %>
 
         <h3>每日总结:</h3>
-        <p><%= diary.summary %></p>
-    </div>
-       <% if (diary.imageUrls && diary.imageUrls.length > 0) { %>
-            <h3>相关图片:</h3>
-            <div class="image-list">
-                <% diary.imageUrls.forEach(imageUrl => { %>
-                    <img src="<%= imageUrl %>" alt="日记图片">
-                <% }); %>
-            </div>
+        <% if (diary.summary) { %>
+            <p><%= diary.summary %></p>
+        <% } else { %>
+            <p class="text-muted">无每日总结</p>
         <% } %>
-    
+    </div>
+    <% if (diary.imageUrls && diary.imageUrls.length > 0) { %>
+        <h3>相关图片:</h3>
+        <div class="view-image-list"> <% diary.imageUrls.forEach(imageUrl => { %>
+                <img src="<%= imageUrl %>" alt="日记图片" class="img-fluid rounded shadow-sm me-2 mb-2"> <% }); %>
+        </div>
+    <% } %>
+
+    <div class="mt-4">
+        <a href="/diary/edit/<%= diary._id %>" class="btn btn-warning me-2"><i class="fas fa-edit me-1"></i>编辑日记</a>
+        <form action="/diary/delete/<%= diary._id %>?_method=DELETE" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('确定要删除这篇日记吗？')"><i class="fas fa-trash-alt me-1"></i>删除日记</button>
+        </form>
+    </div>
 </div>
-</body>
-</html>

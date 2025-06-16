@@ -209,11 +209,14 @@
                         <label for="category" class="form-label"><i class="fas fa-tags"></i> 大类:</label>
                         <select class="form-select" id="category" name="category">
                             <option value="">所有大类</option>
-                            <% distinctCategories.forEach(cat => { %>
-                                <option value="<%= cat %>" <%= typeof query !== 'undefined' && query.category === cat ? 'selected' : '' %>>
-                                    <%= cat %>
-                                </option>
-                            <% }); %>
+                            <option value="衣" <%= typeof query !== 'undefined' && query.category === '衣' ? 'selected' : '' %>>衣</option>
+                            <option value="食" <%= typeof query !== 'undefined' && query.category === '食' ? 'selected' : '' %>>食</option>
+                            <option value="住" <%= typeof query !== 'undefined' && query.category === '住' ? 'selected' : '' %>>住</option>
+                            <option value="行" <%= typeof query !== 'undefined' && query.category === '行' ? 'selected' : '' %>>行</option>
+                            <option value="医" <%= typeof query !== 'undefined' && query.category === '医' ? 'selected' : '' %>>医</option>
+                            <option value="娱" <%= typeof query !== 'undefined' && query.category === '娱' ? 'selected' : '' %>>娱</option>
+                            <option value="人情" <%= typeof query !== 'undefined' && query.category === '人情' ? 'selected' : '' %>>人情</option>
+                            <option value="其他" <%= typeof query !== 'undefined' && query.category === '其他' ? 'selected' : '' %>>其他</option>
                         </select>
                     </div>
                     <div class="col-6 col-md-4 col-lg-3">
