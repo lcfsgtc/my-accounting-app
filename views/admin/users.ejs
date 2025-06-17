@@ -74,6 +74,7 @@
                                 <thead>
                                     <tr>
                                         <th>用户名</th>
+                                        <th>邮箱</th>
                                         <th>管理员</th>
                                         <th>操作</th>
                                     </tr>
@@ -82,6 +83,7 @@
                                     <% users.forEach(function(user) { %>
                                         <tr>
                                             <td><%= user.username %></td>
+                                            <td><%= user.email %></td>
                                             <td>
                                                 <% if (user.isAdmin) { %>
                                                     <span class="badge badge-success">是</span>

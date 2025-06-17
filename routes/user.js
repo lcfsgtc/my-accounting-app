@@ -31,12 +31,20 @@ const checkRegistrationLimit = async (req, res, next) => {
     // 注册
     app.post('/register', checkRegistrationLimit, async (req, res) => {
       try {
-        const { username, password } = req.body;
-
+        const { username, email,password } = req.body;
+        // --- Server-side validation for email ---
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).send('Please enter a valid email address.');
+        }
         // 检查用户名是否已存在
         const existingUser = await User.findOne({ username: username });
         if (existingUser) {
           return res.status(400).send('Username already exists.');
+        }
+        // Check if email already exists (important for uniqueness)
+        const existingEmailUser = await User.findOne({ email: email });
+        if (existingEmailUser) {
+          return res.status(400).send('Email already registered.');
         }
 
         // 对密码进行哈希处理
@@ -45,6 +53,7 @@ const checkRegistrationLimit = async (req, res, next) => {
         // 创建新用户
         const newUser = new User({
           username: username,
+          email: email,
           password: hashedPassword
         });
 
@@ -96,14 +105,6 @@ const checkRegistrationLimit = async (req, res, next) => {
         res.redirect('/login');
       });
     });
-    // 导航页
-    /*app.get('/dashboard', requireLogin, (req, res) => {
-      res.render('login/dashboard');
-    });*/
-    /*// 首页 - 导航页
-    app.get('/', requireLogin, async (req, res) => {
-      res.redirect('/dashboard');
-    });*/
     // 修改密码页面
     app.get('/change-password', requireLogin, (req, res) => {
       res.render('login/change-password');
@@ -167,7 +168,7 @@ const checkRegistrationLimit = async (req, res, next) => {
     // 更新用户 (管理员权限)
     app.post('/admin/users/edit/:id', requireAdmin, async (req, res) => {
       try {
-        const { username, isAdmin } = req.body;
+        const { username, email,isAdmin } = req.body;
         const userId = req.params.id;
 
         // Get the existing user
@@ -175,7 +176,10 @@ const checkRegistrationLimit = async (req, res, next) => {
         if (!user) {
           return res.status(404).send('User not found');
         }
-
+        // --- Server-side validation for email ---
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).send('Please enter a valid email address.');
+        }
         // Only update the username if it's different, and check for uniqueness
         if (username !== user.username) {
           const existingUser = await User.findOne({ username: username });
@@ -184,6 +188,14 @@ const checkRegistrationLimit = async (req, res, next) => {
           }
           user.username = username;
         }
+        // Only update the email if it's different, and check for uniqueness
+        if (email !== user.email) {
+          const existingUserWithEmail = await User.findOne({ email: email });
+          if (existingUserWithEmail && existingUserWithEmail._id.toString() !== userId) {
+            return res.status(400).send('Email already registered by another user.');
+          }
+          user.email = email; // Update the email
+        }     
 
         //Update isAdmin Status
         user.isAdmin = isAdmin === 'true';

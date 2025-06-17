@@ -139,7 +139,6 @@ expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,form
 assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); 
 diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
 booknoteRoute(app, Booknote, requireLogin,mongoose, path, querystring,upload);
-//app.use('/booknotes', bookNotesRoutes);
 /*const actualPort = process.env.PORT || port;
 // 启动服务器
 app.listen(actualPort, () => {
@@ -162,15 +161,5 @@ function formatDate(date) {
     //const seconds = String(date.getSeconds()).padStart(2, '0');
     //return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     return `${year}-${month}-${day}`;
-    /*const options = {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'short',
-  };
-  return date.toLocaleDateString('zh-CN', options).replace(/\//g, '-');*/
 }
 module.exports = app;
