@@ -1,3 +1,9 @@
+<%#
+  This file is now a content partial that will be inserted into views/expenses/layout.ejs.
+  It no longer needs <html>, <head>, <body>, or direct CSS/JS links (except Chart.js which should be in layout).
+  The 'title' variable will be passed from the Express route to layout.ejs.
+%>
+
 <style>
     /* Custom Styles for better responsiveness and aesthetics */
 
@@ -44,6 +50,36 @@
     .form-control, .form-select {
         height: calc(2.25rem + 2px); /* Standardize height for better alignment */
     }
+
+    /* Chart Container Height Adjustment for various screens */
+    .chart-container {
+        position: relative;
+        height: 300px; /* Slightly reduced default height for mobile */
+        width: 100%;
+        display: flex; /* For centering */
+        justify-content: center;
+        align-items: center;
+        padding: 1rem; /* Add some padding around the chart */
+    }
+
+    @media (min-width: 576px) { /* Small devices (landscape phones, 576px and up) */
+        .chart-container {
+            height: 350px;
+        }
+    }
+
+    @media (min-width: 768px) { /* Medium devices (tablets, 768px and up) */
+        .chart-container {
+            height: 400px;
+        }
+    }
+
+    @media (min-width: 992px) { /* Large devices (desktops, 992px and up) */
+        .chart-container {
+            height: 450px;
+        }
+    }
+
     /* Ensure icons in labels are aligned */
     .form-label i {
         vertical-align: middle;
@@ -117,6 +153,7 @@
         .table-responsive td:nth-of-type(2):before { /* For '总金额' */
             /* width: 35%; */ /* Example adjustment */
         }
+
 
         /* Total row styling for mobile */
         .table-responsive .table-info {
@@ -231,6 +268,28 @@
         </div>
     </div>
 
+    <% if (statistics && statistics.length > 0 && query.period !== '') { %>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">统计图表 <i class="fas fa-chart-line text-muted ms-2"></i></h5>
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center chart-container">
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
+    <% } else if (query.period === 'month' && (!statistics || statistics.length === 0)) { %>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">统计图表 <i class="fas fa-chart-line text-muted ms-2"></i></h5>
+            </div>
+            <div class="card-body text-center py-5">
+                <i class="fas fa-info-circle text-muted display-4 mb-3"></i>
+                <p class="lead text-muted">当前年份没有月度支出数据。</p>
+                <p class="text-muted">请调整筛选条件或选择其他年份。</p>
+            </div>
+        </div>
+    <% } %>
+
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-white py-3">
             <h5 class="mb-0">统计详情 <i class="fas fa-table text-muted ms-2"></i></h5>
@@ -284,8 +343,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // REMOVED: Chart-related data and logic
-        // const statisticsData = <%- JSON.stringify(statistics || []) %>;
+        const statisticsData = <%- JSON.stringify(statistics || []) %>;
         const query = <%- JSON.stringify(query || {}) %>;
         const periodType = query.period || '';
         const yearSelectGroup = document.getElementById('yearSelectGroup');
@@ -306,5 +364,156 @@
             yearSelectGroup.style.display = 'none';
         }
 
+        if (statisticsData && statisticsData.length > 0 && periodType !== '') {
+            let labels = statisticsData.map(item => {
+                if (periodType === 'categoryAndSubcategory') {
+                    return `${item._id && item._id.category ? item._id.category : '未知大类'} - ${item._id && item._id.subcategory ? item._id.subcategory : '未知小类'}`;
+                }
+                return item._id;
+            });
+            let data = statisticsData.map(item => item.totalAmount);
+            let chartType = 'bar';
+            let titleText = '支出统计';
+            let xAxesTitle = '类别';
+            let yAxesTitle = '金额';
+
+            if (periodType === 'category') {
+                chartType = 'pie';
+                titleText = '支出按大类统计';
+            } else if (periodType === 'subcategory') {
+                chartType = 'pie';
+                titleText = '支出按小类统计';
+            } else if (periodType === 'categoryAndSubcategory') {
+                chartType = 'bar';
+                titleText = '支出按大类和小类统计';
+                xAxesTitle = '大类 - 小类';
+            } else if (periodType === 'year') {
+                titleText = '支出按年份统计';
+                xAxesTitle = '年份';
+                // Sort years numerically and re-map data accordingly
+                const sortedStatistics = [...statisticsData].sort((a, b) => parseInt(a._id) - parseInt(b._id));
+                labels = sortedStatistics.map(item => item._id);
+                data = sortedStatistics.map(item => item.totalAmount);
+            } else if (periodType === 'month') {
+                chartType = 'line';
+                titleText = '支出按月份统计 (' + (query.year || '所有') + '年)';
+                xAxesTitle = '月份';
+                yAxesTitle = '金额';
+                const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+                const monthlyData = {};
+                for (let i = 1; i <= 12; i++) {
+                    monthlyData[String(i)] = 0;
+                }
+                statisticsData.forEach(item => {
+                    monthlyData[item._id] = item.totalAmount;
+                });
+                labels = Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b)).map(monthNum => monthNames[parseInt(monthNum) - 1]);
+                data = Object.keys(monthlyData).sort((a, b) => parseInt(a) - parseInt(b)).map(monthNum => monthlyData[monthNum]);
+            }
+
+            const backgroundColors = [
+                'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+                'rgba(199, 199, 199, 0.7)', 'rgba(83, 102, 255, 0.7)', 'rgba(201, 203, 207, 0.7)',
+                'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)'
+            ];
+            const borderColors = [
+                'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
+                'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)', 'rgba(201, 203, 207, 1)',
+                'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'
+            ];
+
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '总金额',
+                        data: data,
+                        backgroundColor: chartType === 'line' ? 'rgba(0, 123, 255, 0.2)' : backgroundColors.slice(0, labels.length),
+                        borderColor: chartType === 'line' ? 'rgba(0, 123, 255, 1)' : borderColors.slice(0, labels.length),
+                        borderWidth: 1,
+                        fill: chartType === 'line' ? true : false,
+                        tension: chartType === 'line' ? 0.4 : 0,
+                        pointBackgroundColor: chartType === 'line' ? 'rgba(0, 123, 255, 1)' : undefined,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(0, 123, 255, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: titleText,
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (chartType === 'line' || chartType === 'bar') {
+                                        label += '¥' + context.parsed.y.toFixed(2);
+                                    } else if (chartType === 'pie') {
+                                        const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                                        const percentage = (context.parsed / total * 100).toFixed(1);
+                                        label += '¥' + context.parsed.toFixed(2) + ' (' + percentage + '%)';
+                                    }
+                                    return label;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: chartType !== 'pie',
+                            position: 'bottom',
+                            labels: {
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: chartType === 'pie' ? {} : {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: yAxesTitle,
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value.toFixed(2);
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: xAxesTitle,
+                                font: {
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                autoSkip: true,
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
     });
 </script>

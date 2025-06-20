@@ -13,22 +13,10 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             const limit = parseInt(req.query.limit) || 10; // 每页数量，默认为10条
             const skip = (page - 1) * limit; // 计算跳过的文档数量
             // ------------------
-
-
             const userId = req.session.userId;
-            //const query = req.query; // 获取所有查询参数
 
             let findQuery = { user: userId }; // 初始查询条件
-            //let findQuery = { user: new mongoose.Types.ObjectId(String(userId)) };
-            // 根据查询参数构建筛选条件
-            /*if (query.startDate) {
-                findQuery.purchaseDate = { ...findQuery.purchaseDate, $gte: new Date(query.startDate) };
-            }
-            if (query.endDate) {
-                const endDate = new Date(query.endDate);
-                endDate.setHours(23, 59, 59, 999);
-                findQuery.purchaseDate = { ...findQuery.purchaseDate, $lte: endDate };
-            }*/
+
             // 日期范围过滤
             if (startDate && endDate) {
                 const endOfDay = new Date(endDate);
@@ -59,8 +47,14 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             let totalCost = 0;
             let totalCurrentValue = 0;
             assets.forEach(asset => {
-                totalCost += parseFloat(asset.cost || 0) * parseFloat(asset.quantity || 0);
-                totalCurrentValue += parseFloat(asset.currentValue || 0) * parseFloat(asset.quantity || 0);
+                // 确保 cost 和 quantity 是数字，以防它们是从数据库中以字符串形式返回
+                const cost = parseFloat(asset.cost || 0);
+                const quantity = parseFloat(asset.quantity || 0);
+                totalCost += cost * quantity;    
+                const currentValue = parseFloat(asset.currentValue || 0);
+                totalCurrentValue += currentValue * quantity;                            
+                //totalCost += parseFloat(asset.cost || 0) * parseFloat(asset.quantity || 0);
+                //totalCurrentValue += parseFloat(asset.currentValue || 0) * parseFloat(asset.quantity || 0);
             });
             // 获取所有不重复的类别和自定义类型，用于筛选下拉菜单 (与支出类似)
             //const distinctCategories = await Asset.distinct('category', { user: userId });
@@ -80,8 +74,8 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
                 distinctAssetTypes.add(asset.type); // 收集所有类型
             });
 
-            totalCost = totalCost.toFixed(2);
-            totalCurrentValue = totalCurrentValue.toFixed(2);
+            //totalCost = totalCost.toFixed(2);
+            //totalCurrentValue = totalCurrentValue.toFixed(2);
 
             // ====== 生成 queryString ======
             //const queryString = querystring.stringify(query); // 将查询对象转换为查询字符串
@@ -89,11 +83,6 @@ module.exports = (app, Asset, requireLogin, mongoose, path, querystring, formatD
             delete currentQuery.page;
             delete currentQuery.limit;
             const queryString = querystring.encode(currentQuery);
-
-
-            // 如果存在查询参数，添加 '?' 前缀
-            //const fullQueryString = queryString ? `?${queryString}` : '';
-            // ===================================
 
             res.render('assets/list', {
                 activeMenu: 'assets',

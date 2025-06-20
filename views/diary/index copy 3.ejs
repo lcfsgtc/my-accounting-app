@@ -1,9 +1,9 @@
 <div class="container mt-4 mb-4">
     <% if (success_msg && success_msg.length > 0) { %>
-        <div class="alert alert-success" role="alert"><%= success_msg %></div>
+        <div class="alert alert-success mt-3" role="alert"><%= success_msg %></div>
     <% } %>
     <% if (error_msg && error_msg.length > 0) { %>
-        <div class="alert alert-danger" role="alert"><%= error_msg %></div>
+        <div class="alert alert-danger mt-3" role="alert"><%= error_msg %></div>
     <% } %>
 
     <div class="card shadow-sm mb-5">
@@ -13,19 +13,18 @@
         <div class="card-body pt-3 pb-4">
             <form action="/diary" method="GET" id="filterForm">
                 <div class="form-row align-items-end">
-                    <div class="form-group col-12 col-md-3"> <%# Adjusted col-md-3 %>
+                    <div class="form-group col-12 col-md-4">
                         <label for="startDate" class="form-label">开始日期</label>
                         <input type="date" class="form-control" id="startDate" name="startDate" value="<%= typeof startDate !== 'undefined' ? startDate : '' %>">
                     </div>
-                    <div class="form-group col-12 col-md-3"> <%# Adjusted col-md-3 %>
+                    <div class="form-group col-12 col-md-4">
                         <label for="endDate" class="form-label">结束日期</label>
                         <input type="date" class="form-control" id="endDate" name="endDate" value="<%= typeof endDate !== 'undefined' ? endDate : '' %>">
                     </div>
-                    <div class="form-group col-12 col-md-3"> <%# Adjusted col-md-3 for searchQuery %>
+                    <div class="form-group col-12 col-md-4">
                         <label for="searchQuery" class="form-label">关键词</label>
                         <input type="search" class="form-control" id="searchQuery" placeholder="搜索计划、事件、总结或标题" name="searchQuery" value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>">
                     </div>
-                    <%# Removed specific category/subcategory dropdowns as they don't apply to diary %>
                     <div class="form-group col-12 col-md-auto mt-3 mt-md-0">
                         <button type="submit" class="btn btn-dark w-100 btn-lg"><i class="fas fa-search me-2"></i>筛选</button>
                     </div>
@@ -34,28 +33,17 @@
         </div>
     </div>
 
-    <div class="d-flex flex-wrap mb-4 justify-content-center justify-content-md-start"> <%# Removed gap, using mr-md-3 like expenses %>
-        <a href="/diary/add" class="btn btn-success btn-lg mb-3 me-md-3 w-100 w-md-auto"> <%# me-md-3 instead of mr-md-3 %>
+    <div class="d-flex flex-wrap mb-4 justify-content-center justify-content-md-start gap-2">
+        <a href="/diary/add" class="btn btn-success btn-lg mb-3 mb-md-0 w-100 w-md-auto">
             <i class="fas fa-plus me-2"></i>添加日记
         </a>
-        <% 
-            // 构建导出Excel的queryString
-            // 推荐在后端构建 queryString 并传递，这里为兼容性提供
-            const exportQueryStringParams = {};
-            if (searchQuery) exportQueryStringParams.searchQuery = searchQuery;
-            if (startDate) exportQueryStringParams.startDate = startDate;
-            if (endDate) exportQueryStringParams.endDate = endDate;
-            const exportQueryString = Object.keys(exportQueryStringParams)
-              .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(exportQueryStringParams[key])}`)
-              .join('&');
-        %>
-        <a href="/diary/export<%= exportQueryString ? '?' + exportQueryString : '' %>" class="btn btn-secondary btn-lg mb-3 me-md-3 w-100 w-md-auto"> <%# me-md-3 instead of mr-md-3 %>
+        <a href="/diary/export<%= queryString ? '?' + queryString : '' %>" class="btn btn-secondary btn-lg mb-3 mb-md-0 w-100 w-md-auto">
             <i class="fas fa-file-excel me-2"></i>导出Excel
         </a>
-        <a href="/diary/statistics" class="btn btn-info btn-lg mb-3 w-100 w-md-auto">
+        <a href="/diary/statistics" class="btn btn-info btn-lg mb-3 mb-md-0 w-100 w-md-auto">
             <i class="fas fa-chart-bar me-2"></i>日记统计
         </a>
-        <a href="/" class="btn btn-primary btn-lg mb-3 w-100 w-md-auto">
+        <a href="/" class="btn btn-primary btn-lg mb-3 mb-md-0 w-100 w-md-auto">
             <i class="fas fa-home me-2"></i>返回首页
         </a>
     </div>
@@ -80,16 +68,16 @@
                             <td><%= new Date(diary.date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) %></td>
                             <td><%= diary.title %></td>
                             <td class="text-center">
-                                <div class="d-flex flex-nowrap justify-content-center"> <%# Removed gap, using me-2 %>
-                                    <a href="/diary/view/<%= diary._id %>" class="btn btn-info btn-sm me-2" title="查看"> <%# me-2 instead of mr-2 %>
-                                        <i class="fas fa-eye"></i><span class="d-none d-lg-inline ms-1">查看</span> <%# ms-1 instead of ml-1 %>
+                                <div class="d-flex flex-nowrap justify-content-center gap-2">
+                                    <a href="/diary/view/<%= diary._id %>" class="btn btn-info btn-sm" title="查看">
+                                        <i class="fas fa-eye"></i><span class="d-none d-lg-inline ms-1">查看</span>
                                     </a>
-                                    <a href="/diary/edit/<%= diary._id %>" class="btn btn-warning btn-sm me-2" title="编辑"> <%# me-2 instead of mr-2 %>
-                                        <i class="fas fa-edit"></i><span class="d-none d-lg-inline ms-1">编辑</span> <%# ms-1 instead of ml-1 %>
+                                    <a href="/diary/edit/<%= diary._id %>" class="btn btn-warning btn-sm" title="编辑">
+                                        <i class="fas fa-edit"></i><span class="d-none d-lg-inline ms-1">编辑</span>
                                     </a>
                                     <form action="/diary/delete/<%= diary._id %>" method="POST" style="display: inline;" onsubmit="return confirm('确定要删除这条日记记录吗？');">
                                         <button type="submit" class="btn btn-danger btn-sm" title="删除">
-                                            <i class="fas fa-trash-alt"></i><span class="d-none d-lg-inline ms-1">删除</span> <%# ms-1 instead of ml-1 %>
+                                            <i class="fas fa-trash-alt"></i><span class="d-none d-lg-inline ms-1">删除</span>
                                         </button>
                                     </form>
                                 </div>
@@ -103,12 +91,19 @@
         <div class="d-flex justify-content-between align-items-center mt-4 mb-4 flex-column flex-md-row">
             <%# 每页显示条目数下拉框 %>
             <div class="form-group d-flex align-items-center mb-3 mb-md-0">
-                <label for="limitBottom" class="form-label mb-0 me-2 text-nowrap">每页显示:</label> <%# me-2 instead of mr-2, limitBottom ID %>
-                <select class="form-control form-control-sm w-auto" id="limitBottom" name="limitBottom">
-                    <option value="5" <%= limit == 5 ? 'selected' : '' %>>5</option>
-                    <option value="10" <%= limit == 10 ? 'selected' : '' %>>10</option>
-                    <option value="20" <%= limit == 20 ? 'selected' : '' %>>20</option>
-                    <option value="50" <%= limit == 50 ? 'selected' : '' %>>50</option>
+                <label for="limitSelect" class="form-label mb-0 me-2 text-nowrap">每页显示:</label>
+                <select class="form-control form-control-sm w-auto" id="limitSelect" name="limitSelect">
+                    <% 
+                        // 构建带所有搜索参数的基础URL用于更改limit
+                        const baseLimitChangeUrl = `/diary?page=1` +
+                                                `&searchQuery=${encodeURIComponent(searchQuery || '')}` +
+                                                `&startDate=${encodeURIComponent(startDate || '')}` +
+                                                `&endDate=${encodeURIComponent(endDate || '')}`;
+                    %>
+                    <option value="<%= baseLimitChangeUrl %>&limit=5" <%= limit == 5 ? 'selected' : '' %>>5</option>
+                    <option value="<%= baseLimitChangeUrl %>&limit=10" <%= limit == 10 ? 'selected' : '' %>>10</option>
+                    <option value="<%= baseLimitChangeUrl %>&limit=20" <%= limit == 20 ? 'selected' : '' %>>20</option>
+                    <option value="<%= baseLimitChangeUrl %>&limit=50" <%= limit == 50 ? 'selected' : '' %>>50</option>
                 </select>
             </div>
 
@@ -174,14 +169,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const limitBottomSelect = document.getElementById('limitBottom'); // ID changed to limitBottom
-        if (limitBottomSelect) {
-            limitBottomSelect.addEventListener('change', function() {
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('limit', this.value);
-                currentUrl.searchParams.set('page', 1); // Reset to first page when limit changes
-                window.location.href = currentUrl.toString();
-            });
-        }
+        const limitSelect = document.getElementById('limitSelect');
+        limitSelect.addEventListener('change', function() {
+            window.location.href = this.value; // 直接跳转到预构建的URL
+        });
     });
 </script>

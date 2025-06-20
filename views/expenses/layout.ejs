@@ -6,35 +6,66 @@
     <title><%= title %></title>
     <link rel="stylesheet" href="/bootstrap.min.css">
     <link rel="stylesheet" href="/all.min.css">
-    
     <style>
+        /* CSS Custom Properties (Variables) for easier theming and maintenance */
+        :root {
+            --primary-color: #3498db;           /* 主色调 - 蓝色 */
+            --primary-dark-color: #2980b9;      /* 主色调深色变体 */
+            --secondary-color: #95a5a6;         /* 次要色调 - 灰色 */
+            --sidebar-bg: #2c3e50;              /* 侧边栏背景色 */
+            --text-color: #343a40;              /* 主要文本颜色 */
+            --light-bg: #f8f9fa;                /* 页面背景色 */
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 卡片阴影 */
+            --border-color: #e9ecef;            /* 边框颜色 */
+            --border-radius-md: 0.75rem;        /* 中等圆角 */
+            --spacing-sm: 1rem;                 /* 小间距 */
+            --spacing-md: 1.5rem;               /* 中等间距 */
+            --spacing-lg: 2rem;                 /* 大间距 */
+            --sidebar-width-desktop: 250px;     /* 桌面端侧边栏宽度 */
+            --sidebar-width-tablet: 200px;      /* 平板端侧边栏宽度 */
+            --sidebar-width-mobile: 280px;      /* 移动端侧边栏宽度 */
+        }
+
         /* 全局样式 */
         body {
             font-family: 'Segoe UI', Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: #f8f9fa;
+            background-color: var(--light-bg);
             min-height: 100vh;
             display: flex; /* 确保 body 使用 flexbox 布局 */
             flex-direction: column;
-            overflow-x: hidden;
+            overflow-x: hidden; /* 防止水平滚动条 */
+            color: var(--text-color); /* 应用基础文本颜色 */
         }
 
+        /* 当侧边栏在移动端打开时，防止主体内容滚动 */
+        body.sidebar-open {
+            overflow: hidden; /* 防止背景滚动，但允许内部可滚动区域滚动 */
+        }
+        
         /* 标题和分割线 */
         h1, h2, h3, h4, h5, h6 {
-            color: #343a40;
-            margin-bottom: 1.5rem;
+            color: var(--text-color);
+            margin-bottom: var(--spacing-md);
             font-weight: 700;
         }
         .page-title {
             font-size: 2.2rem;
-            color: #212529;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 1rem;
-            margin-bottom: 2rem !important;
+            color: #212529; /* 特定颜色，不使用变量以保持此标题的独特性 */
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg) !important;
         }
         hr {
             border-top: 1px solid rgba(0, 0, 0, .08);
-            margin-top: 2rem;
-            margin-bottom: 2rem;
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        /* 应用容器：包裹侧边栏和主要内容区域 */
+        .app-container {
+            display: flex;
+            flex-grow: 1; /* 允许其填充垂直空间 */
+            min-height: 0; /* 允许 flex item 在 flex 容器中缩小 */
         }
 
         /* 侧边栏容器样式 - 桌面端固定 */
@@ -42,11 +73,11 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 250px;
+            width: var(--sidebar-width-desktop);
             height: 100vh;
-            background-color: #2c3e50;
+            background-color: var(--sidebar-bg);
             color: #ffffff;
-            padding-top: 2rem;
+            padding-top: var(--spacing-lg);
             z-index: 1030;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
@@ -55,20 +86,20 @@
 
         /* 侧边栏标题 */
         .sidebar-heading {
-            padding-left: 1.5rem;
-            padding-right: 1.5rem;
+            padding-left: var(--spacing-md);
+            padding-right: var(--spacing-md);
             color: rgba(255, 255, 255, 0.7);
             font-size: 1.1rem;
             font-weight: 600;
             text-transform: uppercase;
-            margin-bottom: 1.5rem;
+            margin-bottom: var(--spacing-md);
             letter-spacing: 0.05em;
         }
 
         /* 侧边栏列表项 */
         .sidebar-list-group-item {
             color: rgba(255, 255, 255, 0.85);
-            padding: 0.85rem 1.5rem;
+            padding: 0.85rem var(--spacing-md);
             border: none;
             border-radius: 0;
             display: flex;
@@ -83,10 +114,10 @@
         }
         .sidebar-list-group-item.active {
             color: #ffffff;
-            background-color: #3498db;
+            background-color: var(--primary-color);
             font-weight: 600;
             border-left: 5px solid #ffffff;
-            padding-left: calc(1.5rem - 5px);
+            padding-left: calc(var(--spacing-md) - 5px);
         }
         .sidebar-list-group-item i {
             margin-right: 0.8rem;
@@ -98,119 +129,175 @@
             opacity: 1;
         }
 
-        /* 主内容区域样式 */
-        .main-content-wrapper {
+        /* 主内容区域样式（负责整体布局和边距） */
+        .main-content-area {
             flex-grow: 1;
-            padding: 2.5rem;
-            background-color: #ffffff;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            margin: 1.5rem; /* 保持外部间距，但移除固定的margin-left */
-            /* margin-left: 265px;  <-- 移除或在桌面端媒体查询中设置 */
+            display: flex;
+            flex-direction: column; /* 内部内容垂直堆叠 */
+            padding: var(--spacing-md); /* 移动端基础内边距 */
             transition: margin-left 0.3s ease-in-out;
+            margin-left: 0; /* 移动端默认无左边距 */
+            padding-top: calc(var(--spacing-md) + 40px); /* 为固定汉堡菜单留出空间 */
+            min-height: 0; /* 允许flex item在flex容器中缩小 */
+            overflow-y: auto; /* 允许垂直滚动 */
+            -webkit-overflow-scrolling: touch; /* iOS 上的平滑滚动 */
+        }
+        /* 主内容卡片包装器（负责卡片样式和内部填充） */
+        .main-content-wrapper {
+            background-color: #ffffff;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--card-shadow);
+            padding: 2.5rem; /* 桌面端基础内边距，移动端会调整 */
+            flex-grow: 1; /* 允许内容在区域内增长 */
+            display: flex; /* 让内部内容垂直堆叠 */
+            flex-direction: column;
+            min-height: 0; /* 允许内容在容器内收缩，确保 flex-grow 生效 */
         }
 
-        /* 汉堡菜单按钮 (仅移动端可见) */
+
+        /* 汉堡菜单按钮 (移动端可见，桌面端隐藏) */
         .navbar-toggler-custom {
             position: fixed;
-            top: 1rem;
-            left: 1rem;
-            z-index: 1040;
+            top: var(--spacing-sm);
+            left: var(--spacing-sm);
+            z-index: 1040; /* 确保在侧边栏和蒙版之上 */
             display: none; /* 桌面端隐藏 */
-            background-color: #3498db;
-            border-color: #3498db;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             color: #fff;
             padding: 0.6rem 0.8rem;
             font-size: 1.2rem;
             border-radius: 0.5rem;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            cursor: pointer; /* 添加鼠标手势 */
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
         .navbar-toggler-custom:hover, .navbar-toggler-custom:focus {
-            background-color: #2980b9;
-            border-color: #2980b9;
+            background-color: var(--primary-dark-color);
+            border-color: var(--primary-dark-color);
             color: #fff;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            outline: none; /* 移除焦点时的默认轮廓，提高美观性 */
+        }
+
+        /* 侧边栏蒙版（用于移动端侧边栏打开时覆盖主内容） */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5); /* 半透明蒙版 */
+            z-index: 1025; /* 略低于侧边栏 (1030)，但高于主内容 */
+            opacity: 0;
+            visibility: hidden; /* 默认隐藏 */
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .sidebar-overlay.show {
+            opacity: 1;
+            visibility: visible;
         }
 
         /* 响应式调整 */
 
-        /* 桌面端 (>= 992px) */
+        /* 桌面端 (最小宽度 >= 992px) */
         @media (min-width: 992px) {
-            .main-content-wrapper {
-                margin-left: 265px; /* 桌面端设置左边距 */
+            .app-container {
+                flex-direction: row; /* 侧边栏和主内容并排显示 */
+            }
+            .main-content-area {
+                margin-left: var(--sidebar-width-desktop); /* 桌面端设置左边距以避开侧边栏 */
+                padding: var(--spacing-lg); /* 桌面端统一内边距 */
+                padding-top: var(--spacing-lg); /* 重置顶部内边距 */
+                overflow-y: visible; /* 桌面端通常不需要局部滚动，允许页面整体滚动 */
+            }
+            .navbar-toggler-custom {
+                display: none; /* 确保桌面端隐藏 */
+            }
+            .sidebar-wrapper {
+                transform: translateX(0); /* 确保桌面端侧边栏始终显示 */
+            }
+            .sidebar-overlay {
+                display: none; /* 桌面端隐藏蒙版 */
             }
         }
 
-        /* 平板端 (768px - 991.98px) */
+        /* 平板端 (最小宽度 >= 768px 且 最大宽度 <= 991.98px) */
         @media (min-width: 768px) and (max-width: 991.98px) {
             .sidebar-wrapper {
-                width: 200px;
-                padding-top: 1.5rem;
+                width: var(--sidebar-width-tablet); /* 平板端侧边栏宽度 */
+                padding-top: var(--spacing-md);
             }
             .sidebar-heading {
                 font-size: 1rem;
-                margin-bottom: 1rem;
+                margin-bottom: var(--spacing-sm);
             }
             .sidebar-list-group-item {
-                padding: 0.75rem 1rem;
+                padding: 0.75rem var(--spacing-sm);
             }
-            .main-content-wrapper {
-                margin-left: 215px; /* 平板端调整内容区左边距 */
-                padding: 2rem;
+            .main-content-area {
+                margin-left: var(--sidebar-width-tablet); /* 平板端调整内容区左边距 */
+                padding: var(--spacing-lg);
+                padding-top: var(--spacing-lg); /* 重置顶部内边距 */
+                overflow-y: visible; /* 平板端通常不需要局部滚动，允许页面整体滚动 */
+            }
+            .navbar-toggler-custom {
+                display: none;
+            }
+            .sidebar-overlay {
+                display: none; /* 平板端隐藏蒙版 */
             }
         }
 
-        /* 手机端 (小于 768px) */
+        /* 手机端 (最大宽度 < 768px) */
         @media (max-width: 767.98px) {
+            .app-container {
+                flex-direction: column; /* 手机端垂直堆叠 */
+            }
             .navbar-toggler-custom {
                 display: block; /* 手机端显示汉堡菜单 */
             }
             .sidebar-wrapper {
-                width: 280px;
+                width: var(--sidebar-width-mobile);
                 transform: translateX(-100%); /* 手机端默认隐藏 */
-                box-shadow: none; /* 手机端侧边栏打开时，box-shadow可能不需要 */
+                /* box-shadow: none; */ /* 手机端侧边栏打开时，box-shadow可能不需要，因为有蒙版 */
             }
             .sidebar-wrapper.show {
                 transform: translateX(0); /* 手机端显示 */
             }
-            
-            /* 当侧边栏打开时，主内容区可以轻微偏移或覆盖 */
-            body.sidebar-open {
-                position: relative;
-                overflow: hidden; /* 防止背景滚动 */
-            }
-            body.sidebar-open::after {
-                content: '';
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5); /* 半透明蒙版 */
-                z-index: 1029; /* 在侧边栏之下，内容之上 */
-                transition: opacity 0.3s ease;
-            }
 
+            .main-content-area {
+                margin-left: 0; /* 手机端内容区无固定左边距 */
+                margin-right: 0;
+                padding-left: var(--spacing-sm);
+                padding-right: var(--spacing-sm);
+                padding-top: calc(var(--spacing-md) + 40px); /* 为汉堡菜单留出更多空间 */
+                align-items: center; /* 使 main-content-wrapper 在水平方向居中 */
+                /* 在移动端，确保 main-content-area 有明确的高度以便 overflow-y: auto 生效 */
+                /* 这里使用 calc 计算可用高度，确保内容在视口内可以滚动 */
+                /* 需要考虑页脚高度、顶部汉堡菜单和padding */
+                height: calc(100vh - (var(--spacing-sm) * 2 + 60px + 40px)); /* Rough estimate: header + footer height + padding */
+                /* 60px 是 footer 大致高度， 40px 是汉堡菜单的高度 */
+                /* 如果内容少，不会出现滚动条 */
+            }
             .main-content-wrapper {
-                margin-left: 1rem; /* 手机端内容区左右间距 */
-                margin-right: 1rem;
-                margin-top: 5rem; /* 为汉堡菜单和顶部留出更多空间 */
-                padding: 1.5rem;
-                /* 移除固定左边距，让其居中或根据内容自适应 */
+                margin: 0.5rem 0; /* 增加垂直间距 */
+                padding: 1.5rem; /* 手机端内容卡片较小内边距 */
+                width: 100%; /* 确保填充可用宽度 */
+                max-width: 600px; /* 可选：限制较大手机/小平板屏幕上的宽度以提高可读性 */
             }
             .page-title {
                 font-size: 1.8rem;
-                margin-bottom: 1.5rem !important;
+                margin-bottom: var(--spacing-md) !important;
             }
             hr {
-                margin-top: 1.5rem;
-                margin-bottom: 1.5rem;
+                margin-top: var(--spacing-md);
+                margin-bottom: var(--spacing-md);
             }
         }
 
 
-        /* 通用表单和按钮样式 (微调) */
+        /* 通用表单和按钮样式 (微调并使用变量) */
         .form-label { font-weight: 500; margin-bottom: .4rem; color: #34495e; }
         .form-control {
             border-radius: .4rem;
@@ -219,7 +306,7 @@
             font-size: .95rem;
         }
         .form-control:focus {
-            border-color: #66afe9;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
         }
         .btn {
@@ -230,10 +317,10 @@
         }
         .btn i { margin-right: .6rem; }
 
-        /* 按钮颜色主题 */
-        .btn-primary { background-color: #3498db; border-color: #3498db; }
-        .btn-primary:hover { background-color: #2980b9; border-color: #2980b9; }
-        .btn-secondary { background-color: #95a5a6; border-color: #95a5a6; }
+        /* 按钮颜色主题 (使用变量) */
+        .btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); }
+        .btn-primary:hover { background-color: var(--primary-dark-color); border-color: var(--primary-dark-color); }
+        .btn-secondary { background-color: var(--secondary-color); border-color: var(--secondary-color); }
         .btn-secondary:hover { background-color: #7f8c8d; border-color: #7f8c8d; }
         .btn-danger { background-color: #e74c3c; border-color: #e74c3c; }
         .btn-danger:hover { background-color: #c0392b; border-color: #c0392b; }
@@ -249,15 +336,15 @@
 
         /* 表格样式 (优化) */
         .table {
-            margin-bottom: 1.5rem;
+            margin-bottom: var(--spacing-md);
             border-collapse: separate;
             border-spacing: 0;
-            border-radius: .75rem;
+            border-radius: var(--border-radius-md);
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .table thead th {
-            background-color: #34495e;
+            background-color: #34495e; /* 表头背景色 */
             color: #fff;
             border-bottom: none;
             padding: 1rem 1.2rem;
@@ -269,19 +356,19 @@
         .table tbody td {
             padding: 1rem 1.2rem;
             vertical-align: middle;
-            border-top: 1px solid #eceff1;
+            border-top: 1px solid #eceff1; /* 行分割线 */
         }
         .table tbody tr:last-child td {
             border-bottom: none;
         }
         .table-striped tbody tr:nth-of-type(odd) {
-            background-color: #fcfcfc;
+            background-color: #fcfcfc; /* 斑马条纹背景 */
         }
         .table-hover tbody tr:hover {
-            background-color: #f0f4f7;
+            background-color: #f0f4f7; /* 悬停背景 */
         }
         .table-responsive {
-            border-radius: .75rem;
+            border-radius: var(--border-radius-md);
             overflow-x: auto;
         }
         .table-responsive > .table {
@@ -290,8 +377,8 @@
 
         /* 警告/成功消息 */
         .alert {
-            margin-bottom: 1.5rem;
-            padding: 1rem 1.5rem;
+            margin-bottom: var(--spacing-md);
+            padding: 1rem var(--spacing-md);
             border-radius: 0.5rem;
             font-size: 0.95rem;
             border-width: 1px;
@@ -317,102 +404,114 @@
         .badge-warning { background-color: #f39c12; color: #fff;}
         .badge-danger { background-color: #e74c3c; color: #fff;}
 
-
         /* 评分星级 */
         .text-warning { color: #f1c40f !important; }
         .text-secondary { color: #bdc3c7 !important; }
 
-        /* Sticky footer (optional) */
+        /* 底部页脚 */
         .footer {
             width: 100%;
-            padding: 1.5rem;
+            padding: var(--spacing-md);
             text-align: center;
             color: #7f8c8d;
-            margin-top: auto;
+            margin-top: auto; /* 将页脚推到底部 */
             background-color: #ecf0f1;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
 <body>
-    <button class="navbar-toggler-custom" type="button" data-toggle="collapse" data-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler-custom" type="button" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="fas fa-bars"></span>
     </button>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <nav class="sidebar-wrapper collapse" id="sidebarCollapse">
         <%- include('../menu/sidebar.ejs') %>
     </nav>
 
-    <div class="page-wrapper">
-        <div class="main-content-wrapper">
-            <h1 class="page-title mb-4"><%= title %></h1>
-            <%- body %>
+    <div class="app-container">
+        <div class="main-content-area">
+            <div class="main-content-wrapper">
+                <h1 class="page-title"><%= title %></h1>
+                <%- body %>
+            </div>
         </div>
-
-        </div>
+    </div>
+    
+    <footer class="footer">
+        © 2025 lcf 个人软件. All rights reserved.
+    </footer>
 
     <script src="/jquery-3.5.1.slim.min.js"></script>
     <script src="/popper.min.js"></script>
     <script src="/bootstrap.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Add active class to current sidebar link
+            // 为当前页面对应的侧边栏链接添加 'active' 类
             const currentPath = window.location.pathname;
             $('.sidebar-list-group-item').each(function() {
-                // Check if the href matches the current path, or if it's the root path and current path is also root
-                // For robustness, consider checking if currentPath starts with the href for nested routes
                 const linkHref = $(this).attr('href');
                 if (currentPath === linkHref || (linkHref === '/incomes' && currentPath === '/') || (currentPath.startsWith(linkHref) && linkHref !== '/')) {
                     $(this).addClass('active');
                 } else {
-                    $(this).removeClass('active'); // Ensure only one is active
+                    $(this).removeClass('active');
                 }
             });
 
-            // Handle sidebar collapse on mobile
-            $('#sidebarCollapse').on('show.bs.collapse', function () {
-                $('body').addClass('sidebar-open');
-                // Optional: prevent body scroll when sidebar is open
-                // $('body').css('overflow', 'hidden');
+            const sidebarCollapse = $('#sidebarCollapse');
+            const sidebarOverlay = $('#sidebarOverlay'); // 获取新添加的蒙版元素
+            const body = $('body');
+            const navbarToggler = $('.navbar-toggler-custom');
+
+            // 通过点击汉堡菜单按钮切换侧边栏的显示/隐藏
+            navbarToggler.on('click', function() {
+                sidebarCollapse.collapse('toggle');
+            });
+
+            // 侧边栏显示/隐藏时的事件处理
+            sidebarCollapse.on('show.bs.collapse', function () {
+                body.addClass('sidebar-open');
+                // body.css('overflow', 'hidden'); // 侧边栏打开时，阻止背景滚动 (由 body.sidebar-open CSS 规则处理)
+                if ($(window).width() < 992) { // 仅在移动/平板端显示蒙版
+                    sidebarOverlay.addClass('show');
+                }
             }).on('hide.bs.collapse', function () {
-                $('body').removeClass('sidebar-open');
-                // $('body').css('overflow', 'auto');
-            });
-
-            // Close sidebar when clicking outside on mobile
-            $(document).on('click', function(event) {
-                // Only for screens smaller than 992px (md breakpoint for sidebar)
-                if ($(window).width() < 992) {
-                    const sidebar = $('#sidebarCollapse');
-                    const toggler = $('.navbar-toggler-custom');
-                    // Check if sidebar is open and click is outside sidebar and toggler
-                    if (sidebar.hasClass('show') && !sidebar.is(event.target) && !toggler.is(event.target) && sidebar.has(event.target).length === 0 && toggler.has(event.target).length === 0) {
-                        sidebar.collapse('hide');
-                    }
+                body.removeClass('sidebar-open');
+                // body.css('overflow', ''); // 侧边栏关闭时，恢复背景滚动 (由 body.sidebar-open CSS 规则处理)
+                if ($(window).width() < 992) { // 仅在移动/平板端隐藏蒙版
+                    sidebarOverlay.removeClass('show');
                 }
             });
 
-            // If the sidebar is visible on desktop, ensure it stays open
-            // This handles cases where user might resize window from mobile to desktop while sidebar is open
+            // 点击蒙版时关闭侧边栏
+            sidebarOverlay.on('click touchend', function() {
+                sidebarCollapse.collapse('hide');
+            });
+
+            // 监听窗口大小变化，确保侧边栏状态在不同设备类型间正确切换
             $(window).on('resize', function() {
-                if ($(window).width() >= 992) { // Desktop view
-                    $('#sidebarCollapse').collapse('show'); // Ensure sidebar is shown
-                    $('body').removeClass('sidebar-open'); // Remove body overflow if present
-                } else { // Mobile view
-                    if ($('body').hasClass('sidebar-open')) {
-                        // If sidebar was open on mobile and resized, keep body-open
-                        // But if not, ensure it's collapsed.
-                        // No explicit action needed here as `transform: translateX(-100%)` takes care of it
+                if ($(window).width() >= 992) { // 桌面端视图
+                    sidebarCollapse.collapse('show'); // 确保侧边栏显示
+                    body.removeClass('sidebar-open').css('overflow', ''); // 移除body溢出设置
+                    sidebarOverlay.removeClass('show'); // 桌面端隐藏蒙版
+                } else { // 移动端视图
+                    // 如果从桌面端调整大小到移动端，并且侧边栏是打开的，则默认隐藏
+                    if (sidebarCollapse.hasClass('show') && !body.hasClass('sidebar-open')) {
+                         sidebarCollapse.collapse('hide');
+                    }
+                    // 根据侧边栏是否显示来决定蒙版是否显示
+                    if (sidebarCollapse.hasClass('show')) {
+                        sidebarOverlay.addClass('show');
                     } else {
-                         $('#sidebarCollapse').collapse('hide'); // Ensure it's collapsed
+                        sidebarOverlay.removeClass('show');
                     }
                 }
             });
 
-            // Initial check on page load to ensure correct state for desktop
-            if ($(window).width() >= 992) {
-                $('#sidebarCollapse').collapse('show');
-            }
+            // 页面加载时进行初始检查，确保桌面端侧边栏正确显示，并隐藏蒙版
+            $(window).trigger('resize'); // 触发一次resize事件来初始化状态
         });
     </script>
 </body>

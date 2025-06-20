@@ -12,8 +12,34 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
             const page = parseInt(req.query.page) || 1; // 当前页码，默认为1
             const limit = parseInt(req.query.limit) || 10; // 每页显示数量，默认为10
             const skip = (page - 1) * limit; // 跳过多少条记录
+            const searchQuery = req.query.searchQuery || ''; // 获取搜索关键字
+            const startDate = req.query.startDate || ''; // 获取开始日期
+            const endDate = req.query.endDate || '';     // 获取结束日期            
            // 构建查询条件
             let query = { userId: new mongoose.Types.ObjectId(userId) };
+            // 添加模糊搜索条件
+            if (searchQuery) {
+                const searchRegex = new RegExp(searchQuery, 'i'); // 'i' 表示不区分大小写
+                query.$or = [
+                    { 'planList': { $in: [searchRegex] } }, // 搜索 planList 数组中的元素
+                    { 'eventList': { $in: [searchRegex] } }, // 搜索 eventList 数组中的元素
+                    { 'summary': searchRegex },
+                    { 'title': searchRegex } // 同时搜索标题
+                ];
+            }
+            if (startDate || endDate) {
+                query.date = {}; // 初始化日期查询对象
+                if (startDate) {
+                    const start = new Date(startDate);
+                    start.setUTCHours(0, 0, 0, 0); // 设置为当天的开始（UTC时间）
+                    query.date.$gte = start;
+                }
+                if (endDate) {
+                    const end = new Date(endDate);
+                    end.setUTCHours(23, 59, 59, 999); // 设置为当天的结束（UTC时间）
+                    query.date.$lte = end;
+                }
+            }
             // 获取总记录数
             const totalDiaries = await Diary.countDocuments(query);
             const totalPages = Math.ceil(totalDiaries / limit); // 计算总页数                                    
@@ -23,7 +49,22 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
                                         .sort({ date: 'desc' }) // 按日期降序排列
                                         .skip(skip)
                                         .limit(limit)
-                                        .lean(); // 使用 .lean() 提高查询性能            
+                                        .lean(); // 使用 .lean() 提高查询性能  
+            const currentQueryParams = {
+                searchQuery: searchQuery,
+                startDate: startDate,
+                endDate: endDate,
+                // 如果您还有其他筛选参数，也请添加到这里
+            };
+
+            // 过滤掉空值、undefined 和与分页直接相关的参数（page和limit）
+            const filteredQueryParams = Object.keys(currentQueryParams)
+                .filter(key => currentQueryParams[key] !== '' && currentQueryParams[key] !== undefined);
+
+            const queryString = filteredQueryParams
+                .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(currentQueryParams[key])}`)
+                .join('&');                                        
+                                        
             res.render('diary/index', { 
                 activeMenu: 'diary',
                 layout: 'diary/layout.ejs',
@@ -33,6 +74,10 @@ module.exports = (app, Diary, requireLogin, mongoose, path, querystring,upload) 
                 currentPage: page,
                 totalPages: totalPages,
                 limit: limit,
+                searchQuery: searchQuery, // 传递搜索关键字给模板
+                startDate: startDate,     // 传递开始日期给模板
+                endDate: endDate,         // 传递结束日期给模板
+                queryString: queryString, // 传递 queryString 给模板
                 success_msg: req.flash('success_msg'), // 传递 flash 消息
                 error_msg: req.flash('error_msg'),                
                 path: path,
