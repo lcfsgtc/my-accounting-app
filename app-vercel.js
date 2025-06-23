@@ -139,7 +139,11 @@ expenseRoute(app, Expense, requireLogin,mongoose, path, querystring, Parser,form
 assetRoute(app, Asset, requireLogin,mongoose, path, querystring, Parser,formatDate); 
 diaryRoute(app, Diary, requireLogin,mongoose, path, querystring,upload);
 booknoteRoute(app, Booknote, requireLogin,mongoose, path, querystring,upload);
-
+/*const actualPort = process.env.PORT || port;
+// 启动服务器
+app.listen(actualPort, () => {
+    console.log(`Server listening on port ${actualPort}`);
+});*/
 // 首页 - 导航页
 app.get('/', requireLogin, async (req, res) => {
     res.redirect('/dashboard');
@@ -158,11 +162,4 @@ function formatDate(date) {
     //return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     return `${year}-${month}-${day}`;
 }
-
-const actualPort = process.env.PORT || port;
-// 启动服务器
-app.listen(actualPort, () => {
-    console.log(`Server listening on port ${actualPort}`);
-});
-
 module.exports = app;

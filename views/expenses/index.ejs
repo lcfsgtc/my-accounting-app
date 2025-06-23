@@ -87,8 +87,8 @@
                         <tr>
                             <td><%= expense.description %></td>
                             <td><span class="text-danger font-weight-bold">¥<%= expense.amount.toFixed(2) %></span></td>
-                            <td class="d-none d-md-table-cell"><span class="badge badge-primary"><%= expense.category %></span></td>
-                            <td class="d-none d-lg-table-cell"><span class="badge badge-info"><%= expense.subcategory %></span></td>
+                            <td><span class="badge badge-primary"><%= expense.category %></span></td>
+                            <td><span class="badge badge-info"><%= expense.subcategory %></span></td>
                             <td><%= new Date(expense.date).toLocaleDateString('zh-CN') %></td>
                             <td class="text-center">
                                 <div class="d-flex flex-nowrap justify-content-center">

@@ -1,119 +1,174 @@
-<button class="navbar-toggler d-md-none mb-3 btn btn-outline-secondary" type="button" data-toggle="collapse" data-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span> 菜单
-</button>
+<style>
+    /* ------------------- 关键修复：添加一个可滚动的页面容器 ------------------- */
+    .statistics-page-container {
+        /* 这使得容器能填满其父元素的可用空间，并能独立滚动 */
+        height: 100%; 
+        overflow-y: auto; /* 这是最重要的部分：当内容超出时，显示垂直滚动条 */
+        padding: 1rem; /* 增加一些内边距，让内容不贴边 */
+    }
 
-<!--h1 class="mb-4">收入统计</h1-->
-<a href="/incomes" class="btn btn-secondary mb-4">
-    <i class="fas fa-arrow-left me-2"></i>返回收入列表
-</a>
-<hr>
-<form action="/incomes/statistics" method="GET" class="mb-4">
-    <div class="form-row">
-        <div class="form-group col-12 col-sm-6 col-md-2">
-            <label for="startDate">开始日期:</label>
-            <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate || '' %>">
-        </div>
-        <div class="form-group col-12 col-sm-6 col-md-2">
-            <label for="endDate">结束日期:</label>
-            <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate || '' %>">
-        </div>
-        <div class="form-group col-12 col-sm-6 col-md-2">
-            <label for="categoryType">类别:</label>
-            <select id="categoryType" name="categoryType" class="form-control">
-                <option value="" <%= categoryType === "" ? 'selected' : '' %>>所有类别</option>
-                <option value="category" <%= categoryType === "category" ? 'selected' : '' %>>大类</option>
-                <option value="subcategory" <%= categoryType === "subcategory" ? 'selected' : '' %>>小类</option>
-                <option value="categoryAndSubcategory" <%= categoryType === "categoryAndSubcategory" ? 'selected' : '' %>>大类和小类</option>
-            </select>
-        </div>
-        <div class="form-group col-12 col-sm-6 col-md-2">
-            <label for="minAmount">最小金额:</label>
-            <input type="number" class="form-control" id="minAmount" name="minAmount" value="<%= minAmount || '' %>" step="0.01" placeholder="例如：100.00">
-        </div>
-        <div class="form-group col-12 col-sm-6 col-md-2">
-            <label for="maxAmount">最大金额:</label>
-            <input type="number" class="form-control" id="maxAmount" name="maxAmount" value="<%= maxAmount || '' %>" step="0.01" placeholder="例如：1000.00">
-        </div>
-        <div class="form-group col-12 col-sm-6 col-md-2">
-            <label for="period">统计时间:</label>
-            <select id="period" name="period" class="form-control">
-                <option value="" <%= period === "" ? 'selected' : '' %>>总计</option>
-                <option value="year" <%= period === "year" ? 'selected' : '' %>>按年</option>
-                <option value="month" <%= period === "month" ? 'selected' : '' %>>按月</option>
-            </select>
-        </div>
-        <div class="col-12 col-md-2 d-flex align-items-end mt-sm-3 mt-md-0">
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="fas fa-chart-bar me-2"></i>生成统计
-            </button>
-        </div>
-    </div>
-</form>
-<hr>
-<h2 class="mb-3">统计结果</h2>
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="thead-dark">
-            <tr>
-                <th>类别/时间</th>
-                <th>总金额</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (statistics && statistics.length > 0) { %>
-                <% statistics.forEach(item => { %>
-                    <tr>
-                        <td>
-                            <% // 精细化处理 item._id 的显示 %>
-                            <% if (typeof item._id === 'object' && item._id !== null) { %>
-                                <% let displayString = ''; %>
-                                <%
-                                    if (item._id.category && item._id.subcategory) {
-                                        displayString += item._id.category + ' - ' + item._id.subcategory;
-                                    } else if (item._id.category) {
-                                        displayString += item._id.category;
-                                    } else if (item._id.subcategory) { // 单独的小类统计
-                                        displayString += item._id.subcategory;
-                                    }
+    /* 以下是之前为表单和表格添加的响应式样式，继续保留 */
+    .responsive-stats-table thead {
+        display: none;
+    }
 
-                                    // 添加时间信息
-                                    if (item._id.year && item._id.month) {
-                                        if (displayString !== '') displayString += ' - ';
-                                        displayString += item._id.year + '年' + String(item._id.month).padStart(2, '0') + '月';
-                                    } else if (item._id.year) {
-                                        if (displayString !== '') displayString += ' - ';
-                                        displayString += item._id.year + '年';
-                                    } else if (item._id.month) {
-                                        // 这种情况通常只出现在 'period' 为 'month' 且 'categoryType' 为空时
-                                        displayString += String(item._id.month).padStart(2, '0') + '月';
-                                    }
+    @media (max-width: 767.98px) {
+        .responsive-stats-table tbody,
+        .responsive-stats-table tr,
+        .responsive-stats-table td {
+            display: block;
+            width: 100%;
+        }
 
-                                    // 如果以上都没有匹配到（例如，纯粹的总计，_id为null或空对象）
-                                    if (displayString === '' && item._id === null) {
-                                        displayString = '总计';
-                                    } else if (displayString === '') {
-                                        // 兜底，防止意外情况，但通常不应该发生
-                                        displayString = '[未知统计项]';
-                                    }
-                                %>
-                                <%= displayString %>
-                            <% } else { %>
-                                <% // 处理简单 _id (例如：总计为 null，或单个类别名称字符串) %>
-                                <% if (item._id === null) { %>
-                                    总计
-                                <% } else { %>
-                                    <%= item._id %>
-                                <% } %>
-                            <% } %>
-                        </td>
-                        <td>¥ <%= item.totalAmount ? item.totalAmount.toFixed(2) : '0.00' %></td>
-                    </tr>
-                <% }); %>
-            <% } else { %>
+        .responsive-stats-table tr {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+        }
+
+        .responsive-stats-table td {
+            border: none;
+            padding: 0.6rem 0.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: right;
+        }
+
+        .responsive-stats-table td:not(:last-child) {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .responsive-stats-table td::before {
+            content: attr(data-label);
+            font-weight: bold;
+            text-align: left;
+            padding-right: 1rem;
+            color: #495057;
+        }
+
+        .responsive-stats-table .no-data-cell {
+            text-align: center;
+            padding: 2rem 1rem;
+            display: block;
+        }
+    }
+</style>
+
+<div class="statistics-page-container">
+
+    <button class="navbar-toggler d-md-none mb-3 btn btn-outline-secondary" type="button" data-toggle="collapse" data-target="#sidebarCollapse" aria-controls="sidebarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span> 菜单
+    </button>
+
+    <a href="/incomes" class="btn btn-secondary mb-4">
+        <i class="fas fa-arrow-left me-2"></i>返回收入列表
+    </a>
+    <hr>
+
+    <form action="/incomes/statistics" method="GET" class="mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="startDate">开始日期:</label>
+                <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate || '' %>">
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="endDate">结束日期:</label>
+                <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate || '' %>">
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="categoryType">类别:</label>
+                <select id="categoryType" name="categoryType" class="form-control">
+                    <option value="" <%= categoryType === "" ? 'selected' : '' %>>所有类别</option>
+                    <option value="category" <%= categoryType === "category" ? 'selected' : '' %>>大类</option>
+                    <option value="subcategory" <%= categoryType === "subcategory" ? 'selected' : '' %>>小类</option>
+                    <option value="categoryAndSubcategory" <%= categoryType === "categoryAndSubcategory" ? 'selected' : '' %>>大类和小类</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="minAmount">最小金额:</label>
+                <input type="number" class="form-control" id="minAmount" name="minAmount" value="<%= minAmount || '' %>" step="0.01" placeholder="例如：100.00">
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="maxAmount">最大金额:</label>
+                <input type="number" class="form-control" id="maxAmount" name="maxAmount" value="<%= maxAmount || '' %>" step="0.01" placeholder="例如：1000.00">
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <label for="period">统计时间:</label>
+                <select id="period" name="period" class="form-control">
+                    <option value="" <%= period === "" ? 'selected' : '' %>>总计</option>
+                    <option value="year" <%= period === "year" ? 'selected' : '' %>>按年</option>
+                    <option value="month" <%= period === "month" ? 'selected' : '' %>>按月</option>
+                </select>
+            </div>
+            <div class="col-12 col-lg-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary w-100 w-md-auto mt-3">
+                    <i class="fas fa-chart-bar me-2"></i>生成统计
+                </button>
+            </div>
+        </div>
+    </form>
+    <hr>
+
+    <h2 class="mb-3">统计结果</h2>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover responsive-stats-table">
+            <thead class="thead-dark">
                 <tr>
-                    <td colspan="2" class="text-center text-muted py-4">没有符合条件的统计数据。</td>
+                    <th>类别/时间</th>
+                    <th>总金额</th>
                 </tr>
-            <% } %>
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                <% if (statistics && statistics.length > 0) { %>
+                    <% statistics.forEach(item => { %>
+                        <tr>
+                            <td data-label="类别/时间:">
+                                <% if (typeof item._id === 'object' && item._id !== null) { %>
+                                    <% let displayString = ''; %>
+                                    <%
+                                        if (item._id.category && item._id.subcategory) {
+                                            displayString += item._id.category + ' - ' + item._id.subcategory;
+                                        } else if (item._id.category) {
+                                            displayString += item._id.category;
+                                        } else if (item._id.subcategory) {
+                                            displayString += item._id.subcategory;
+                                        }
+                                        if (item._id.year && item._id.month) {
+                                            if (displayString !== '') displayString += ' - ';
+                                            displayString += item._id.year + '年' + String(item._id.month).padStart(2, '0') + '月';
+                                        } else if (item._id.year) {
+                                            if (displayString !== '') displayString += ' - ';
+                                            displayString += item._id.year + '年';
+                                        } else if (item._id.month) {
+                                            displayString += String(item._id.month).padStart(2, '0') + '月';
+                                        }
+                                        if (displayString === '' && item._id === null) {
+                                            displayString = '总计';
+                                        } else if (displayString === '') {
+                                            displayString = '[未知统计项]';
+                                        }
+                                    %>
+                                    <%= displayString %>
+                                <% } else { %>
+                                    <% if (item._id === null) { %>
+                                        总计
+                                    <% } else { %>
+                                        <%= item._id %>
+                                    <% } %>
+                                <% } %>
+                            </td>
+                            <td data-label="总金额:">¥ <%= item.totalAmount ? item.totalAmount.toFixed(2) : '0.00' %></td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="2" class="text-center text-muted py-4 no-data-cell">没有符合条件的统计数据。</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+</div> 
